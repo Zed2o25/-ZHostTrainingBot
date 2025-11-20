@@ -384,3 +384,13 @@ if __name__ == '__main__':
     # Start Flask app (this will always run)
     logging.info("🌐 Starting Flask server...")
     app.run(host='0.0.0.0', port=port)
+
+# Alternative: Run bot in main thread (comment out the threading part)
+if token:
+    logging.info("🚀 Starting bot in main thread...")
+    run_bot(token)
+else:
+    logging.error("❌ No token found, bot not started")
+    # Start Flask only
+    logging.info("🌐 Starting Flask server only...")
+    app.run(host='0.0.0.0', port=port)
