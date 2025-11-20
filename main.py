@@ -29,7 +29,7 @@ TRAINING_DATA = {
                 "type": "text",
                 "title_ar": "أنت صانع أجواء",
                 "title_en": "You Create the Atmosphere",
-                "content_ar": "في العالم الصوتي، أنت المسؤول الوحيد عن صناعة المشاعر وتوجيه الطاقة\nصوتك ليس مجرد وسيلة نقل معلومات، بل هو أداة صناعة المشاعر\n\nمثال: عندما تتحدث عن موضوع مفرح، اجعل نبرة صوتك مرتفعة ومليئة بالحيوية\nمثال: عندما تقدم موضوعاً جاداً، اخفض نبرة صوتك وأعطِ كل كلمة وزنها\n\nالاستماع النشط ليس سماعاً:\nالسماع: عملية سلبية تتم دون تركيز\nالاستماع: عملية نشطة تتطلب التركيز والفهم والاستجابة الذكية\n\nكيف تستمتع بنشاط؟\nلا تنتظر دورك للكلام: ركز على ما يقال الآن وليس على ردك القادم\nالرد على المشاعر: انتبه لنبرة صوت المتحدث\nالأسئلة التوضيحية: هل تقصد أن...؟ ماذا حدث بعد ذلك؟\n\nصناعة هويتك الصوتية:\nالثقة: نابعة من إيمانك بقيمتك وما تقدمه\nالطاقة: اجعل طاقتك إيجابية ومعدية حتى في الأيام العادية\nالأصالة: كن صادقاً في ردودك وتفاعلك، لا تتصنع شخصية غيرك",
+                "content_ar": "في العالم الصوتي، أنت المسؤول الوحيد عن صناعة المشاعر وتوجيه الطاقة\nصوتك ليس مجرد وسيلة نقل معلومات، بل هو أداة صناعة المشاعر\n\nمثال: عندما تتحدث عن موضوع مفرح، اجعل نبرة صوتك مرتفعة ومليئة بالحيوية\nمثال: عندما تقدم موضوعاً جاداً، اخفض نبرة صوتك وأعطِ كل كلمة وزنها\n\nالاستماع النشط ليس سماعاً:\nالسماع: عملية سلبية تتم دون تركيز\nالاستماع: عملية نشطة تتطلب التركيز والفهم والاستجابة الذكية\n\nكيف تستمع بنشاط؟\nلا تنتظر دورك للكلام: ركز على ما يقال الآن وليس على ردك القادم\nالرد على المشاعر: انتبه لنبرة صوت المتحدث\nالأسئلة التوضيحية: هل تقصد أن...؟ ماذا حدث بعد ذلك؟\n\nصناعة هويتك الصوتية:\nالثقة: نابعة من إيمانك بقيمتك وما تقدمه\nالطاقة: اجعل طاقتك إيجابية ومعدية حتى في الأيام العادية\nالأصالة: كن صادقاً في ردودك وتفاعلك، لا تتصنع شخصية غيرك",
                 "content_en": "In the audio world, you are solely responsible for creating emotions and directing energy\nYour voice is not just a means of transmitting information, but a tool for creating emotions\n\nExample: When talking about a happy topic, make your tone high and full of vitality\nExample: When presenting a serious topic, lower your tone and give each word its weight\n\nActive listening is not just hearing:\nHearing: A passive process without focus\nListening: An active process requiring concentration, understanding, and intelligent response\n\nHow to listen actively?\nDon't wait for your turn to speak: Focus on what is being said now, not your next response\nRespond to emotions: Pay attention to the speaker's tone\nClarifying questions: Do you mean that...? What happened next?\n\nBuilding your vocal identity:\nConfidence: Stemming from your belief in your value and what you offer\nEnergy: Make your energy positive and contagious even on ordinary days\nAuthenticity: Be honest in your responses and interactions, don't fake another personality"
             },
             {
@@ -871,20 +871,42 @@ def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 def run_bot():
+    # Get token from environment variable with better error handling
     token = os.environ.get('TELEGRAM_TOKEN')
+    
     if not token:
-        logging.error("No TELEGRAM_TOKEN found in environment variables")
+        logging.error("❌ TELEGRAM_TOKEN not found in environment variables!")
+        logging.info("💡 Please set TELEGRAM_TOKEN in Render environment variables")
+        logging.info("💡 Go to your Render dashboard -> Environment -> Add TELEGRAM_TOKEN")
         return
     
-    bot = TrainingBot(token)
-    bot.application.run_polling()
+    try:
+        logging.info("🤖 Starting Telegram Bot...")
+        bot = TrainingBot(token)
+        logging.info("✅ Bot initialized successfully")
+        bot.application.run_polling()
+    except Exception as e:
+        logging.error(f"❌ Failed to start bot: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     
+    # Start bot in background thread
     import threading
-    bot_thread = threading.Thread(target=run_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
     
+    # Check if token exists before starting bot thread
+    token = os.environ.get('TELEGRAM_TOKEN')
+    if token:
+        logging.info("🚀 Starting bot thread...")
+        bot_thread = threading.Thread(target=run_bot)
+        bot_thread.daemon = True
+        bot_thread.start()
+        logging.info("✅ Bot thread started successfully")
+    else:
+        logging.error("❌ TELEGRAM_TOKEN not found! Bot will not start.")
+        logging.info("💡 Please set TELEGRAM_TOKEN in Render environment variables")
+        logging.info("💡 Your token should look like: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz")
+    
+    # Start Flask app (this will always run)
+    logging.info("🌐 Starting Flask server...")
     app.run(host='0.0.0.0', port=port)
