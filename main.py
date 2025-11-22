@@ -3225,7 +3225,7 @@ Choose from the menu below to start your journey! 🚀"""
         
         # Check sequential progression
         if not can_access_day(user_id, day_num):
-            language = get_user_language(user_id)
+            language = self.get_user_language(user_id)
             progress = db.get_user_progress(user_id)
             current_day = progress.get("current_day", 1) if progress else 1
             
@@ -3239,24 +3239,24 @@ Choose from the menu below to start your journey! 🚀"""
         
         day_data = TRAINING_DATA.get(day_num)
         if not day_data:
-            error_text = get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
-            bot.send_message(chat_id, error_text)
+            error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
+            self.bot.send_message(chat_id, error_text)
             return
         
         # Update streak
-        supdate_streak(user_id)
+        update_streak(user_id)
         
         # Send day content
-        content = format_day_content(day_data, user_id, day_num)
+        content = self.format_day_content(day_data, user_id, day_num)
         if content:
-            bot.send_message(chat_id, content)
+            self.bot.send_message(chat_id, content)
         else:
-            error_text = get_text(user_id, "❌ خطأ في تحميل المحتوى", "❌ Error loading content")
-            bot.send_message(chat_id, error_text)
+            error_text = self.get_text(user_id, "❌ خطأ في تحميل المحتوى", "❌ Error loading content")
+            self.bot.send_message(chat_id, error_text)
             return
         
         # Send simple completion keyboard
-        language = get_user_language(user_id)
+        language = self.get_user_language(user_id)
         completion_keyboard = create_simple_day_completion(user_id, day_num, language)
     
         if language == 'ar':
@@ -3264,7 +3264,7 @@ Choose from the menu below to start your journey! 🚀"""
         else:
             progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
     
-        bot.send_message(chat_id, progress_text, completion_keyboard)
+        self.bot.send_message(chat_id, progress_text, completion_keyboard)
     
     def format_day_content(self, day_data, user_id, day_num):
         """Format complete day content with all materials"""
