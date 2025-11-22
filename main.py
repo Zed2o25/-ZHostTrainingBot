@@ -156,6 +156,39 @@ class Database:
         
         conn.commit()
         conn.close()
+def can_access_day(user_id, day_num):
+    """Check if user can access this day based on completion of previous days"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return day_num == 1  # Only allow day 1 for new users
+    
+    completed_days = progress.get("completed_days", set())
+    current_day = progress.get("current_day", 1)
+    
+    # Allow access to:
+    # 1. Already completed days (for review)
+    # 2. Current day in progression
+    # 3. Next day only if current day is completed
+    if day_num in completed_days:
+        return True
+    elif day_num == current_day:
+        return True
+    elif day_num == current_day + 1 and current_day in completed_days:
+        return True
+    else:
+        return False
+
+def can_take_quiz(user_id, day_num):
+    """Check if user can take quiz for this day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return False
+    
+    # Only allow quiz for current day or completed days
+    current_day = progress.get("current_day", 1)
+    completed_days = progress.get("completed_days", set())
+    
+    return day_num == current_day or day_num in completed_days
     
     def get_user_preferences(self, user_id):
         conn = sqlite3.connect(self.db_path)
@@ -2818,6 +2851,18 @@ Choose from the menu below to start your journey! 🚀"""
                 send_achievement_notification(self.bot, user_id, new_achievements)
     
     def send_day_content(self, chat_id, user_id, day_num):
+        """Send day content with progression check"""
+    if not can_access_day(user_id, day_num):
+        language = self.get_user_language(user_id)
+        if language == 'ar':
+            error_text = f"⏳ يجب إكمال اليوم {day_num-1} أولاً للوصول إلى اليوم {day_num}"
+        else:
+            error_text = f"⏳ You need to complete Day {day_num-1} first to access Day {day_num}"
+        
+        self.bot.send_message(chat_id, error_text)
+        return
+    
+    # Continue with existing day content logic...
         """Send complete day content to user with exercise tracking"""
         day_data = TRAINING_DATA.get(day_num)
         if not day_data:
