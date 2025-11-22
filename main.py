@@ -95,24 +95,24 @@ class Database:
         conn.close()
 
         def save_user_preferences(self, user_id, preferences):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO user_preferences 
-            (user_id, language, breathing_reminders, daily_reminders, quiz_reminders, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            preferences.get("language", "ar"),
-            int(preferences.get("breathing_reminders", True)),
-            int(preferences.get("daily_reminders", True)),
-            int(preferences.get("quiz_reminders", True)),
-            datetime.now().isoformat()
-        ))
-        
-        conn.commit()
-        conn.close()
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT OR REPLACE INTO user_preferences 
+                (user_id, language, breathing_reminders, daily_reminders, quiz_reminders, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                user_id,
+                preferences.get("language", "ar"),
+                int(preferences.get("breathing_reminders", True)),
+                int(preferences.get("daily_reminders", True)),
+                int(preferences.get("quiz_reminders", True)),
+                datetime.now().isoformat()
+            ))
+            
+            conn.commit()
+            conn.close()
     
     def get_user_progress(self, user_id):
         conn = sqlite3.connect(self.db_path)
