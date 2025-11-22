@@ -2961,6 +2961,51 @@ Choose from the menu below to start your journey! 🚀"""
             # Send achievement notifications if any
             if new_achievements:
                 send_achievement_notification(self.bot, user_id, new_achievements)
+
+elif data.startswith("complete_task_"):
+    parts = data.split("_")
+    day_num = int(parts[2])
+    task_num = int(parts[3])
+    task_type = parts[4]
+    
+    new_achievements = mark_task_completed(user_id, day_num, task_num, task_type)
+    
+    # Send confirmation
+    language = self.get_user_language(user_id)
+    if language == 'ar':
+        confirm_text = f"✅ **تم إكمال المهمة!**\n\nتم تحديث تقدمك. استمر في العمل الجيد! 💪"
+    else:
+        confirm_text = f"✅ **Task Completed!**\n\nYour progress has been updated. Keep up the good work! 💪"
+    
+    self.bot.send_message(chat_id, confirm_text)
+    
+    # Refresh the day view to show updated completion status
+    self.send_day_content(chat_id, user_id, day_num)
+    
+    # Send achievement notifications if any
+    if new_achievements:
+        send_achievement_notification(self.bot, user_id, new_achievements)
+
+elif data.startswith("complete_quiz_"):
+    day_num = int(data.split("_")[2])
+    
+    # Mark quiz as completed in tasks
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        initialize_user_progress(user_id)
+        progress = db.get_user_progress(user_id)
+    
+    if "completed_exercises" not in progress:
+        progress["completed_exercises"] = {}
+    if day_num not in progress["completed_exercises"]:
+        progress["completed_exercises"][day_num] = set()
+    
+    quiz_key = f"quiz_{day_num}"
+    progress["completed_exercises"][day_num].add(quiz_key)
+    db.save_user_progress(user_id, progress)
+    
+    # Start the quiz
+    self.start_quiz(chat_id, user_id, day_num)
     
     def send_day_content(self, chat_id, user_id, day_num):
     """Send day content with progression check"""
