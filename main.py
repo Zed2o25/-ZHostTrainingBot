@@ -2386,7 +2386,7 @@ def complete_exercise(user_id, day_num, exercise_type):
     new_achievements = check_and_unlock_achievements(user_id)
     
     return new_achievements
-
+"""
 def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
     """Create completion buttons for ALL tasks in a day"""
     progress = db.get_user_progress(user_id)
@@ -2464,7 +2464,46 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
     tasks.append([{"text": "🏠 القائمة الرئيسية" if language == 'ar' else "🏠 Main Menu", "callback_data": "main_menu"}])
     
     return {"inline_keyboard": tasks}
+"""
 
+# NEW SIMPLIFIED TASK COMPLETION SYSTEM
+def create_simple_day_completion(user_id, day_num, language):
+    """Create simple completion button for the entire day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        progress = {"completed_days": []}
+    
+    # Check if day is already completed
+    completed_days = progress.get("completed_days", [])
+    is_day_completed = day_num in completed_days
+    
+    if language == 'ar':
+        if is_day_completed:
+            complete_button = {"text": "✅ اليوم مكتمل", "callback_data": "already_completed"}
+        else:
+            complete_button = {"text": "🎯 إكمال اليوم", "callback_data": f"complete_day_{day_num}"}
+        
+        quiz_button = {"text": "❓ اختبار اليوم", "callback_data": f"start_quiz_{day_num}"}
+        menu_button = {"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}
+    else:
+        if is_day_completed:
+            complete_button = {"text": "✅ Day Completed", "callback_data": "already_completed"}
+        else:
+            complete_button = {"text": "🎯 Complete Day", "callback_data": f"complete_day_{day_num}"}
+        
+        quiz_button = {"text": "❓ Day Quiz", "callback_data": f"start_quiz_{day_num}"}
+        menu_button = {"text": "🏠 Main Menu", "callback_data": "main_menu"}
+    
+    keyboard = {
+        "inline_keyboard": [
+            [complete_button],
+            [quiz_button],
+            [menu_button]
+        ]
+    }
+    
+    return keyboard
+    
 def mark_task_completed(user_id, day_num, task_num, task_type):
     """Mark any type of task as completed"""
     progress = db.get_user_progress(user_id)
@@ -2576,7 +2615,7 @@ def format_progress_dashboard(user_id, language):
 💪 **Keep Going!**"""
     
     return dashboard
-
+'''
 def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
     """Create completion buttons for ALL tasks in a day"""
     progress = db.get_user_progress(user_id)
@@ -2654,7 +2693,45 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
     tasks.append([{"text": "🏠 القائمة الرئيسية" if language == 'ar' else "🏠 Main Menu", "callback_data": "main_menu"}])
     
     return {"inline_keyboard": tasks}
-
+'''
+# NEW SIMPLIFIED TASK COMPLETION SYSTEM
+def create_simple_day_completion(user_id, day_num, language):
+    """Create simple completion button for the entire day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        progress = {"completed_days": []}
+    
+    # Check if day is already completed
+    completed_days = progress.get("completed_days", [])
+    is_day_completed = day_num in completed_days
+    
+    if language == 'ar':
+        if is_day_completed:
+            complete_button = {"text": "✅ اليوم مكتمل", "callback_data": "already_completed"}
+        else:
+            complete_button = {"text": "🎯 إكمال اليوم", "callback_data": f"complete_day_{day_num}"}
+        
+        quiz_button = {"text": "❓ اختبار اليوم", "callback_data": f"start_quiz_{day_num}"}
+        menu_button = {"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}
+    else:
+        if is_day_completed:
+            complete_button = {"text": "✅ Day Completed", "callback_data": "already_completed"}
+        else:
+            complete_button = {"text": "🎯 Complete Day", "callback_data": f"complete_day_{day_num}"}
+        
+        quiz_button = {"text": "❓ Day Quiz", "callback_data": f"start_quiz_{day_num}"}
+        menu_button = {"text": "🏠 Main Menu", "callback_data": "main_menu"}
+    
+    keyboard = {
+        "inline_keyboard": [
+            [complete_button],
+            [quiz_button],
+            [menu_button]
+        ]
+    }
+    
+    return keyboard
+    
 def mark_task_completed(user_id, day_num, task_num, task_type):
     """Mark any type of task as completed"""
     progress = db.get_user_progress(user_id)
@@ -3151,27 +3228,72 @@ Choose from the menu below to start your journey! 🚀"""
         elif data.startswith("answer_"):
             answer_index = int(data.split("_")[1])
             self.handle_quiz_answer(chat_id, user_id, answer_index)
-        
-        elif data.startswith("complete_exercise_"):
-            parts = data.split("_")
-            day_num = int(parts[2])
-            exercise_num = int(parts[3])
-            exercise_type = parts[4]
+
+        elif data.startswith("complete_day_"):
+            day_num = int(data.split("_")[2])
             
-            new_achievements = complete_exercise(user_id, day_num, exercise_type)
+            # Mark day as completed
+            progress = db.get_user_progress(user_id)
+            if not progress:
+                initialize_user_progress(user_id)
+                progress = db.get_user_progress(user_id)
+            
+            # Initialize completed days if not exists
+            if "completed_days" not in progress:
+                progress["completed_days"] = []
+            
+            # Add day to completed days if not already there
+            if day_num not in progress["completed_days"]:
+                progress["completed_days"].append(day_num)
+            
+            # Update current day to next day if this is the current day
+            current_day = progress.get("current_day", 1)
+            if day_num == current_day:
+                progress["current_day"] = min(15, current_day + 1)
+            
+            db.save_user_progress(user_id, progress)
             
             # Send confirmation
             language = self.get_user_language(user_id)
             if language == 'ar':
-                confirm_text = f"✅ **تم إكمال التمرين!**\n\nتم تحديث تقدمك. استمر في العمل الجيد! 💪"
+                confirm_text = f"✅ **تم إكمال اليوم {day_num}!**\n\nيمكنك الآن الانتقال إلى اليوم التالي أو اختبار اليوم."
+                if day_num == current_day:
+                    confirm_text += f"\n\n🔓 اليوم {progress['current_day']} متاح الآن!"
             else:
-                confirm_text = f"✅ **Exercise Completed!**\n\nYour progress has been updated. Keep up the good work! 💪"
+                confirm_text = f"✅ **Day {day_num} Completed!**\n\nYou can now proceed to the next day or take the day's quiz."
+                if day_num == current_day:
+                    confirm_text += f"\n\n🔓 Day {progress['current_day']} is now available!"
             
             self.bot.send_message(chat_id, confirm_text)
             
-            # Send achievement notifications if any
+            # Refresh the day view to show updated status
+            self.send_day_content(chat_id, user_id, day_num)
+            
+            # Check for achievements
+            new_achievements = check_and_unlock_achievements(user_id)
             if new_achievements:
                 send_achievement_notification(self.bot, user_id, new_achievements)
+                
+                elif data.startswith("complete_exercise_"):
+                    parts = data.split("_")
+                    day_num = int(parts[2])
+                    exercise_num = int(parts[3])
+                    exercise_type = parts[4]
+                    
+                    new_achievements = complete_exercise(user_id, day_num, exercise_type)
+                    
+                    # Send confirmation
+                    language = self.get_user_language(user_id)
+                    if language == 'ar':
+                        confirm_text = f"✅ **تم إكمال التمرين!**\n\nتم تحديث تقدمك. استمر في العمل الجيد! 💪"
+                    else:
+                        confirm_text = f"✅ **Exercise Completed!**\n\nYour progress has been updated. Keep up the good work! 💪"
+                    
+                    self.bot.send_message(chat_id, confirm_text)
+                    
+                    # Send achievement notifications if any
+                    if new_achievements:
+                        send_achievement_notification(self.bot, user_id, new_achievements)
         
         elif data.startswith("complete_task_"):
             parts = data.split("_")
@@ -3217,7 +3339,7 @@ Choose from the menu below to start your journey! 🚀"""
             
             # Start the quiz
             self.start_quiz(chat_id, user_id, day_num)
-    
+    '''
     def send_day_content(self, chat_id, user_id, day_num):
         """Send complete day content to user with comprehensive task tracking"""
         # Check sequential progression
@@ -3259,34 +3381,17 @@ Choose from the menu below to start your journey! 🚀"""
             progress_text = f"📊 **Day {day_num} Progress:** {completed_count}/{total_tasks} completed\n\nSelect tasks to complete:"
         
         self.bot.send_message(chat_id, progress_text, task_keyboard)
+'''
+# Send simple completion keyboard
+language = self.get_user_language(user_id)
+completion_keyboard = create_simple_day_completion(user_id, day_num, language)
 
-    def format_day_content_with_completion(self, day_data, user_id, day_num):
-        language = self.get_user_language(user_id)
-        title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
-        
-        progress = db.get_user_progress(user_id)
-        completed_tasks = progress.get("completed_exercises", {}).get(day_num, []) if progress else set()
-        
-        content = f"**{title}**\n\n"
-        
-        for i, material in enumerate(day_data['materials'], 1):
-            material_title = material['title_ar'] if language == 'ar' else material['title_en']
-            material_content = material['content_ar'] if language == 'ar' else material['content_en']
-            
-            task_type = "reading"
-            if "تمرين" in material_title or "exercise" in material_title.lower():
-                task_type = "vocal"
-            elif "مهمة" in material_title or "task" in material_title.lower():
-                task_type = "daily_task"
-            
-            task_key = f"{task_type}_{day_num}_{i}"
-            is_completed = task_key in completed_tasks
-            
-            status_emoji = "✅" if is_completed else "📝"
-            content += f"{status_emoji} **{i}. {material_title}**\n"
-            content += f"{material_content}\n\n"
-        
-        return content
+if language == 'ar':
+    progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
+else:
+    progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
+
+self.bot.send_message(chat_id, progress_text, completion_keyboard)
     
     def format_day_content(self, day_data, user_id, day_num):
         """Format complete day content with all materials and exercise tracking"""
