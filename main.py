@@ -134,7 +134,7 @@ Daily Task: Listen to another host and analyze their way of dealing with guests 
 وضوح الكلام هو الاحترافية ذاتها:
 ركز على مخارج الحروف، خاصة الحروف التي تحتاج لجهد (ق، غ، ظ، ر)
 تخيل أنك ترمي الكلمات مثل السهام، يجب أن تكون واضحة ومستقيمة
-مثال: عند نطق كلمة "مستقبل"، ركز على كل حرف وخاصة حرف "القاف"""",
+مثال: عند نطق كلمة "مستقبل"، ركز على كل حرف وخاصة حرف القاف
                 "content_en": """Vocal Warm-up Exercises (Daily Routine):
 Diaphragmatic breathing: Breathe deeply through your nose so your stomach expands, exhale slowly through your mouth
 Lip exercises: Purse your lips together and move them in all directions
