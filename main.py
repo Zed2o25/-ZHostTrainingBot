@@ -2534,6 +2534,118 @@ def format_progress_dashboard(user_id, language):
     
     return dashboard
 
+def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
+    """Create completion buttons for ALL tasks in a day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        progress = {"completed_exercises": {}}
+    
+    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set())
+    
+    tasks = []
+    
+    for i, material in enumerate(day_data['materials'], 1):
+        material_title = material.get('title_ar', '') or material.get('title_en', '')
+        material_type = material.get('type', 'text')
+        
+        # Determine task type
+        task_type = "reading"
+        if "تمرين" in material_title or "exercise" in material_title.lower():
+            if "تنفس" in material_title or "breathing" in material_title.lower():
+                task_type = "breathing"
+            elif "قصة" in material_title or "story" in material_title.lower():
+                task_type = "storytelling" 
+            elif "تسجيل" in material_title or "recording" in material_title.lower():
+                task_type = "recording"
+            else:
+                task_type = "vocal"
+        elif "مهمة" in material_title or "task" in material_title.lower():
+            task_type = "daily_task"
+        elif "نشاط" in material_title or "activity" in material_title.lower():
+            task_type = "group_activity"
+        
+        task_key = f"{task_type}_{day_num}_{i}"
+        is_completed = task_key in completed_tasks
+        
+        if language == 'ar':
+            status = "✅ مكتمل" if is_completed else "📝 انقر للإكمال"
+            button_text = f"{status} - {material_title}"
+        else:
+            status = "✅ Completed" if is_completed else "📝 Click to complete" 
+            button_text = f"{status} - {material_title}"
+        
+        callback_data = f"complete_task_{day_num}_{i}_{task_type}"
+        tasks.append([{"text": button_text, "callback_data": callback_data}])
+    
+    # Add quiz completion
+    quiz_key = f"quiz_{day_num}"
+    quiz_completed = quiz_key in completed_tasks
+    if language == 'ar':
+        quiz_text = "✅ اختبار مكتمل" if quiz_completed else "❓ إكمال الاختبار"
+    else:
+        quiz_text = "✅ Quiz Completed" if quiz_completed else "❓ Complete Quiz"
+    
+    tasks.append([{"text": quiz_text, "callback_data": f"complete_quiz_{day_num}"}])
+    
+    tasks.append([{"text": "🏠 القائمة الرئيسية" if language == 'ar' else "🏠 Main Menu", "callback_data": "main_menu"}])
+    
+    return {"inline_keyboard": tasks}
+
+def mark_task_completed(user_id, day_num, task_num, task_type):
+    """Mark any type of task as completed"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        initialize_user_progress(user_id)
+        progress = db.get_user_progress(user_id)
+    
+    # Initialize tasks tracking
+    if "completed_exercises" not in progress:
+        progress["completed_exercises"] = {}
+    
+    if day_num not in progress["completed_exercises"]:
+        progress["completed_exercises"][day_num] = set()
+    
+    # Mark task as completed
+    task_key = f"{task_type}_{day_num}_{task_num}"
+    progress["completed_exercises"][day_num].add(task_key)
+    
+    # Update specific counters based on task type
+    if task_type == "vocal" or task_type == "recording":
+        progress["completed_voice_exercises"] = progress.get("completed_voice_exercises", 0) + 1
+        if task_type == "recording":
+            progress["recording_sessions"] = progress.get("recording_sessions", 0) + 1
+    elif task_type == "breathing":
+        progress["breathing_sessions_completed"] = progress.get("breathing_sessions_completed", 0) + 1
+    elif task_type == "storytelling":
+        progress["storytelling_exercises"] = progress.get("storytelling_exercises", 0) + 1
+    elif task_type == "daily_task":
+        progress["daily_tasks_completed"] = progress.get("daily_tasks_completed", 0) + 1
+    
+    # Save progress
+    db.save_user_progress(user_id, progress)
+    
+    # Check for achievements
+    new_achievements = check_and_unlock_achievements(user_id)
+    
+    return new_achievements
+
+def get_day_completion_stats(user_id, day_num):
+    """Get completion statistics for a specific day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return 0, 0
+    
+    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set())
+    day_data = TRAINING_DATA.get(day_num, {})
+    
+    # Count total tasks (materials + quiz)
+    total_tasks = len(day_data.get('materials', [])) + 1  # +1 for quiz
+    
+    # Count completed tasks
+    completed_count = len(completed_tasks)
+    
+    return completed_count, total_tasks
+
 # =============================================================================
 # TELEGRAM BOT CLASS
 # =============================================================================
