@@ -2851,20 +2851,22 @@ Choose from the menu below to start your journey! 🚀"""
                 send_achievement_notification(self.bot, user_id, new_achievements)
     
     def send_day_content(self, chat_id, user_id, day_num):
-        """Send day content with progression check"""
+    """Send day content with progression check"""
     if not can_access_day(user_id, day_num):
         language = self.get_user_language(user_id)
+        progress = db.get_user_progress(user_id)
+        current_day = progress.get("current_day", 1) if progress else 1
+        
         if language == 'ar':
-            error_text = f"⏳ يجب إكمال اليوم {day_num-1} أولاً للوصول إلى اليوم {day_num}"
+            error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
         else:
-            error_text = f"⏳ You need to complete Day {day_num-1} first to access Day {day_num}"
+            error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
         
         self.bot.send_message(chat_id, error_text)
         return
     
     # Continue with existing day content logic...
-        """Send complete day content to user with exercise tracking"""
-        day_data = TRAINING_DATA.get(day_num)
+    day_data = TRAINING_DATA.get(day_num)
         if not day_data:
             error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
             self.bot.send_message(chat_id, error_text)
