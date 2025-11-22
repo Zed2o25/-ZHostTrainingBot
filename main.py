@@ -238,89 +238,6 @@ class Database:
         
         conn.commit()
         conn.close()
-
-    def can_access_day(user_id, day_num):
-        """Check if user can access this day based on completion of previous days"""
-        progress = db.get_user_progress(user_id)
-        if not progress:
-            return day_num == 1  # Only allow day 1 for new users
-        
-        completed_days = progress.get("completed_days", set())
-        current_day = progress.get("current_day", 1)
-        
-        # Allow access to:
-        # 1. Already completed days (for review)
-        # 2. Current day in progression
-        # 3. Next day only if current day is completed
-        if day_num in completed_days:
-            return True
-        elif day_num == current_day:
-            return True
-        elif day_num == current_day + 1 and current_day in completed_days:
-            return True
-        else:
-            return False
-    
-    def can_take_quiz(user_id, day_num):
-        """Check if user can take quiz for this day"""
-        progress = db.get_user_progress(user_id)
-        if not progress:
-            return False
-        
-        # Only allow quiz for current day or completed days
-        current_day = progress.get("current_day", 1)
-        completed_days = progress.get("completed_days", set())
-        
-        return day_num == current_day or day_num in completed_days
-          
-    def get_quiz_state(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-            
-        cursor.execute('SELECT * FROM quiz_state WHERE user_id = ?', (user_id,))
-        result = cursor.fetchone()
-            
-        if result:
-            quiz_state = {
-                'day': result[1],
-                'current_question': result[2],
-                'score': result[3],
-                'total_questions': result[4],
-                'quiz_data': json.loads(result[5]) if result[5] else {}
-            }
-        else:
-            quiz_state = None
-            
-        conn.close()
-        return quiz_state
-        
-    def save_quiz_state(self, user_id, quiz_state):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-            
-        cursor.execute('''
-            INSERT OR REPLACE INTO quiz_state 
-            (user_id, day, current_question, score, total_questions, quiz_data)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            quiz_state.get('day'),
-            quiz_state.get('current_question'),
-            quiz_state.get('score'),
-            quiz_state.get('total_questions'),
-            json.dumps(quiz_state.get('quiz_data', {}))
-        ))
-            
-        conn.commit()
-        conn.close()
-        
-    def delete_quiz_state(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-            
-        cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
-        conn.commit()
-        conn.close()
             
     def get_all_users_with_preferences(self, preference_type):
         """Get all users who have specific reminder preferences enabled"""
@@ -341,6 +258,93 @@ class Database:
 
 # Initialize database
 db = Database()
+
+# =============================================================================
+# HELPER FUNCTIONS - MOVE THESE BEFORE MessageHandler CLASS
+# =============================================================================
+
+def can_access_day(user_id, day_num):
+    """Check if user can access this day based on completion of previous days"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return day_num == 1  # Only allow day 1 for new users
+        
+    completed_days = progress.get("completed_days", set())
+    current_day = progress.get("current_day", 1)
+        
+    # Allow access to:
+    # 1. Already completed days (for review)
+    # 2. Current day in progression
+    # 3. Next day only if current day is completed
+    if day_num in completed_days:
+        return True
+    elif day_num == current_day:
+        return True
+    elif day_num == current_day + 1 and current_day in completed_days:
+        return True
+    else:
+        return False
+    
+def can_take_quiz(user_id, day_num):
+    """Check if user can take quiz for this day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return False
+        
+    # Only allow quiz for current day or completed days
+    current_day = progress.get("current_day", 1)
+    completed_days = progress.get("completed_days", set())
+        
+    return day_num == current_day or day_num in completed_days
+          
+def get_quiz_state(self, user_id):
+    conn = sqlite3.connect(self.db_path)
+    cursor = conn.cursor()
+            
+    cursor.execute('SELECT * FROM quiz_state WHERE user_id = ?', (user_id,))
+    result = cursor.fetchone()
+            
+    if result:
+        quiz_state = {
+            'day': result[1],
+            'current_question': result[2],
+            'score': result[3],
+            'total_questions': result[4],
+            'quiz_data': json.loads(result[5]) if result[5] else {}
+        }
+    else:
+        quiz_state = None
+            
+    conn.close()
+    return quiz_state
+        
+def save_quiz_state(self, user_id, quiz_state):
+    conn = sqlite3.connect(self.db_path)
+    cursor = conn.cursor()
+            
+    cursor.execute('''
+        INSERT OR REPLACE INTO quiz_state 
+        (user_id, day, current_question, score, total_questions, quiz_data)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (
+        user_id,
+        quiz_state.get('day'),
+        quiz_state.get('current_question'),
+        quiz_state.get('score'),
+        quiz_state.get('total_questions'),
+        json.dumps(quiz_state.get('quiz_data', {}))
+    ))
+            
+    conn.commit()
+    conn.close()
+        
+def delete_quiz_state(self, user_id):
+    conn = sqlite3.connect(self.db_path)
+    cursor = conn.cursor()
+            
+    cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
 
 # =============================================================================
 # COMPLETE 15-DAY TRAINING DATA - EXACT CONTENT AS PROVIDED
@@ -2577,85 +2581,7 @@ def format_progress_dashboard(user_id, language):
 💪 **Keep Going!**"""
     
     return dashboard
-'''
-def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
-    """Create completion buttons for ALL tasks in a day"""
-    progress = db.get_user_progress(user_id)
-    if not progress:
-        progress = {"completed_exercises": {}}
-    
-    completed_tasks = progress.get("completed_exercises", {}).get(day_num, [])
-    
-    tasks = []
-    
-    for i, material in enumerate(day_data['materials'], 1):
-        material_title = material.get('title_ar', '') or material.get('title_en', '')
-        material_type = material.get('type', 'text')
-        
-        # Determine task type
-        task_type = "reading"
-        if "تمرين" in material_title or "exercise" in material_title.lower():
-            if "تنفس" in material_title or "breathing" in material_title.lower():
-                task_type = "breathing"
-            elif "قصة" in material_title or "story" in material_title.lower():
-                task_type = "storytelling" 
-            elif "تسجيل" in material_title or "recording" in material_title.lower():
-                task_type = "recording"
-            else:
-                task_type = "vocal"
-        elif "مهمة" in material_title or "task" in material_title.lower():
-            task_type = "daily_task"
-        elif "نشاط" in material_title or "activity" in material_title.lower():
-            task_type = "group_activity"
-        
-        task_key = f"{task_type}_{day_num}_{i}"
-        is_completed = task_key in completed_tasks
-        
-        if language == 'ar':
-            if is_completed:
-                status = "✅ مكتمل"
-                button_text = f"{status} - {material_title}"
-                callback_data = "already_completed"
-            else:
-                status = "📝 انقر للإكمال"
-                button_text = f"{status} - {material_title}"
-                callback_data = f"complete_task_{day_num}_{i}_{task_type}"
-        else:
-            if is_completed:
-                status = "✅ Completed"
-                button_text = f"{status} - {material_title}"
-                callback_data = "already_completed"
-            else:
-                status = "📝 Click to complete"
-                button_text = f"{status} - {material_title}"
-                callback_data = f"complete_task_{day_num}_{i}_{task_type}"
-        
-        tasks.append([{"text": button_text, "callback_data": callback_data}])
-    
-    # Add quiz completion
-    quiz_key = f"quiz_{day_num}"
-    quiz_completed = quiz_key in completed_tasks
-    if language == 'ar':
-        if quiz_completed:
-            quiz_text = "✅ اختبار مكتمل"
-            quiz_callback = "already_completed"
-        else:
-            quiz_text = "❓ إكمال الاختبار"
-            quiz_callback = f"complete_quiz_{day_num}"
-    else:
-        if quiz_completed:
-            quiz_text = "✅ Quiz Completed"
-            quiz_callback = "already_completed"
-        else:
-            quiz_text = "❓ Complete Quiz"
-            quiz_callback = f"complete_quiz_{day_num}"
-    
-    tasks.append([{"text": quiz_text, "callback_data": quiz_callback}])
-    
-    tasks.append([{"text": "🏠 القائمة الرئيسية" if language == 'ar' else "🏠 Main Menu", "callback_data": "main_menu"}])
-    
-    return {"inline_keyboard": tasks}
-'''
+
 # NEW SIMPLIFIED TASK COMPLETION SYSTEM
 def create_simple_day_completion(user_id, day_num, language):
     """Create simple completion button for the entire day"""
@@ -3001,10 +2927,10 @@ class MessageHandler:
     def __init__(self, bot):
         self.bot = bot
         # Import the helper functions
-        from __main__ import can_access_day, update_streak, create_simple_day_completion
-        self.can_access_day = can_access_day
-        self.update_streak = update_streak
-        self.create_simple_day_completion = create_simple_day_completion
+        # from __main__ import can_access_day, update_streak, create_simple_day_completion
+        # self.can_access_day = can_access_day
+        # self.update_streak = update_streak
+        # self.create_simple_day_completion = create_simple_day_completion
         
     def get_user_language(self, user_id):
         preferences = db.get_user_preferences(user_id)
@@ -3298,8 +3224,8 @@ Choose from the menu below to start your journey! 🚀"""
         logging.info(f"📖 Sending day {day_num} content for user {user_id}")
         
         # Check sequential progression
-        if not self.can_access_day(user_id, day_num):
-            language = self.get_user_language(user_id)
+        if not can_access_day(user_id, day_num):
+            language = get_user_language(user_id)
             progress = db.get_user_progress(user_id)
             current_day = progress.get("current_day", 1) if progress else 1
             
@@ -3313,24 +3239,24 @@ Choose from the menu below to start your journey! 🚀"""
         
         day_data = TRAINING_DATA.get(day_num)
         if not day_data:
-            error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
-            self.bot.send_message(chat_id, error_text)
+            error_text = get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
+            bot.send_message(chat_id, error_text)
             return
         
         # Update streak
-        self.update_streak(user_id)
+        supdate_streak(user_id)
         
         # Send day content
-        content = self.format_day_content(day_data, user_id, day_num)
+        content = format_day_content(day_data, user_id, day_num)
         if content:
-            self.bot.send_message(chat_id, content)
+            bot.send_message(chat_id, content)
         else:
-            error_text = self.get_text(user_id, "❌ خطأ في تحميل المحتوى", "❌ Error loading content")
-            self.bot.send_message(chat_id, error_text)
+            error_text = get_text(user_id, "❌ خطأ في تحميل المحتوى", "❌ Error loading content")
+            bot.send_message(chat_id, error_text)
             return
         
         # Send simple completion keyboard
-        language = self.get_user_language(user_id)
+        language = get_user_language(user_id)
         completion_keyboard = create_simple_day_completion(user_id, day_num, language)
     
         if language == 'ar':
@@ -3338,7 +3264,7 @@ Choose from the menu below to start your journey! 🚀"""
         else:
             progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
     
-        self.bot.send_message(chat_id, progress_text, completion_keyboard)
+        bot.send_message(chat_id, progress_text, completion_keyboard)
     
     def format_day_content(self, day_data, user_id, day_num):
         """Format complete day content with all materials"""
