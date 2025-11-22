@@ -3602,17 +3602,6 @@ def initialize_bot():
 # MAIN EXECUTION
 # =============================================================================
 
-@app.route('/check-methods')
-def check_methods():
-    """Check which methods exist"""
-    db = Database()
-    methods = {
-        'save_user_preferences': hasattr(db, 'save_user_preferences'),
-        'get_user_preferences': hasattr(db, 'get_user_preferences'),
-        'get_user_progress': hasattr(db, 'get_user_progress'),
-        'save_user_progress': hasattr(db, 'save_user_progress'),
-    }
-    return jsonify(methods)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
