@@ -3319,84 +3319,61 @@ Choose from the menu below to start your journey! 🚀"""
             # Start the quiz
             self.start_quiz(chat_id, user_id, day_num)
     
-    def send_day_content(self, chat_id, user_id, day_num):
-        """Send complete day content to user with comprehensive task tracking"""
-        # Check sequential progression
-        if not can_access_day(user_id, day_num):
-            language = self.get_user_language(user_id)
-            progress = db.get_user_progress(user_id)
-            current_day = progress.get("current_day", 1) if progress else 1
-            
-            if language == 'ar':
-                error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
-            else:
-                error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
-            
-            self.bot.send_message(chat_id, error_text)
-            return
-        
-        day_data = TRAINING_DATA.get(day_num)
-        if not day_data:
-            error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
-            self.bot.send_message(chat_id, error_text)
-            return
-        
-        # Update streak
-        update_streak(user_id)
-        
-        # Send day content with completion status
-        content = self.format_day_content_with_completion(day_data, user_id, day_num)
-        self.bot.send_message(chat_id, content)
-                
-        # Send simple completion keyboard
+def send_day_content(self, chat_id, user_id, day_num):
+    """Send complete day content to user with simple completion system"""
+    # Check sequential progression
+    if not can_access_day(user_id, day_num):
         language = self.get_user_language(user_id)
-        completion_keyboard = create_simple_day_completion(user_id, day_num, language)
+        progress = db.get_user_progress(user_id)
+        current_day = progress.get("current_day", 1) if progress else 1
         
         if language == 'ar':
-            progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
+            error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
         else:
-            progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
+            error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
         
-        self.bot.send_message(chat_id, progress_text, completion_keyboard)
+        self.bot.send_message(chat_id, error_text)
+        return
     
-    def format_day_content(self, day_data, user_id, day_num):
-        """Format complete day content with all materials and exercise tracking"""
-        language = self.get_user_language(user_id)
-        title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
+    day_data = TRAINING_DATA.get(day_num)
+    if not day_data:
+        error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
+        self.bot.send_message(chat_id, error_text)
+        return
+    
+    # Update streak
+    update_streak(user_id)
+    
+    # Send day content
+    content = self.format_day_content(day_data, user_id, day_num)
+    self.bot.send_message(chat_id, content)
+    
+    # Send simple completion keyboard
+    language = self.get_user_language(user_id)
+    completion_keyboard = create_simple_day_completion(user_id, day_num, language)
+
+    if language == 'ar':
+        progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
+    else:
+        progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
+
+    self.bot.send_message(chat_id, progress_text, completion_keyboard)
+    
+def format_day_content(self, day_data, user_id, day_num):
+    """Format complete day content with all materials"""
+    language = self.get_user_language(user_id)
+    title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
+    
+    content = f"**{title}**\n\n"
+    
+    for i, material in enumerate(day_data['materials'], 1):
+        material_title = material['title_ar'] if language == 'ar' else material['title_en']
+        material_content = material['content_ar'] if language == 'ar' else material['content_en']
         
-        content = f"**{title}**\n\n"
-        
-        # Check if user has completed any exercises for this day
-        progress = db.get_user_progress(user_id)
-        user_exercises = progress.get("completed_exercises", {}).get(day_num, set()) if progress else set()
-        
-        for i, material in enumerate(day_data['materials'], 1):
-            material_title = material['title_ar'] if language == 'ar' else material['title_en']
-            material_content = material['content_ar'] if language == 'ar' else material['content_en']
-            
-            content += f"**{i}. {material_title}**\n"
-            content += f"{material_content}\n\n"
-            
-            # Add exercise completion status for practical exercises
-            if "تمرين" in material_title or "Exercise" in material_title:
-                exercise_type = "vocal"
-                if "تنفس" in material_title or "breathing" in material_title.lower():
-                    exercise_type = "breathing"
-                elif "قصة" in material_title or "story" in material_title.lower():
-                    exercise_type = "storytelling"
-                elif "تسجيل" in material_title or "recording" in material_title.lower():
-                    exercise_type = "recording"
-                
-                # Check if already completed
-                exercise_key = f"{exercise_type}_{day_num}_{i}"
-                if exercise_key in user_exercises:
-                    status = "✅ " + ("مكتمل" if language == 'ar' else "Completed")
-                else:
-                    status = "📝 " + ("انقر لإكمال التمرين" if language == 'ar' else "Click to complete exercise")
-                
-                content += f"**{status}**\n\n"
-        
-        return content
+        content += f"**{i}. {material_title}**\n"
+        content += f"{material_content}\n\n"
+    
+    return content
     
     def start_quiz(self, chat_id, user_id, day_num):
         """Start a quiz for a specific day"""
