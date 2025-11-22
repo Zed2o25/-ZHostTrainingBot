@@ -134,7 +134,7 @@ class Database:
                 "storytelling_exercises": result[9],
                 "completed_exercises": json.loads(result[10]),
                 "total_study_time": result[11],
-                "achievements_unlocked": json.loads(result[12]),
+                "achievements_unlocked": set(json.loads(result[12])),
                 "daily_tasks_completed": result[13],
                 "recording_sessions": result[14]
             }
