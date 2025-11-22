@@ -176,40 +176,7 @@ class Database:
         
         conn.commit()
         conn.close()
-def can_access_day(user_id, day_num):
-    """Check if user can access this day based on completion of previous days"""
-    progress = db.get_user_progress(user_id)
-    if not progress:
-        return day_num == 1  # Only allow day 1 for new users
-    
-    completed_days = progress.get("completed_days", set())
-    current_day = progress.get("current_day", 1)
-    
-    # Allow access to:
-    # 1. Already completed days (for review)
-    # 2. Current day in progression
-    # 3. Next day only if current day is completed
-    if day_num in completed_days:
-        return True
-    elif day_num == current_day:
-        return True
-    elif day_num == current_day + 1 and current_day in completed_days:
-        return True
-    else:
-        return False
-
-def can_take_quiz(user_id, day_num):
-    """Check if user can take quiz for this day"""
-    progress = db.get_user_progress(user_id)
-    if not progress:
-        return False
-    
-    # Only allow quiz for current day or completed days
-    current_day = progress.get("current_day", 1)
-    completed_days = progress.get("completed_days", set())
-    
-    return day_num == current_day or day_num in completed_days
-    
+        
     def get_user_preferences(self, user_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -248,8 +215,43 @@ def can_take_quiz(user_id, day_num):
         ))
         
         conn.commit()
-        conn.close()
+        conn.close() 
+
+
+def can_access_day(user_id, day_num):
+    """Check if user can access this day based on completion of previous days"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return day_num == 1  # Only allow day 1 for new users
     
+    completed_days = progress.get("completed_days", set())
+    current_day = progress.get("current_day", 1)
+    
+    # Allow access to:
+    # 1. Already completed days (for review)
+    # 2. Current day in progression
+    # 3. Next day only if current day is completed
+    if day_num in completed_days:
+        return True
+    elif day_num == current_day:
+        return True
+    elif day_num == current_day + 1 and current_day in completed_days:
+        return True
+    else:
+        return False
+
+def can_take_quiz(user_id, day_num):
+    """Check if user can take quiz for this day"""
+    progress = db.get_user_progress(user_id)
+    if not progress:
+        return False
+    
+    # Only allow quiz for current day or completed days
+    current_day = progress.get("current_day", 1)
+    completed_days = progress.get("completed_days", set())
+    
+    return day_num == current_day or day_num in completed_days
+      
     def get_quiz_state(self, user_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
