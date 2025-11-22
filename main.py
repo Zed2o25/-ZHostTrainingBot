@@ -3397,7 +3397,7 @@ Choose from the menu below to start your journey! 🚀"""
         if "completed_exercises" not in progress:
             progress["completed_exercises"] = {}
         if quiz_state['day'] not in progress["completed_exercises"]:
-            progress["completed_exercises"][quiz_state['day']] =[]
+            progress["completed_exercises"][quiz_state['day']] = []
 
         quiz_task_key = f"quiz_{quiz_state['day']}"
         if quiz_task_key not in progress["completed_exercises"][quiz_state['day']]:
@@ -3411,9 +3411,9 @@ Choose from the menu below to start your journey! 🚀"""
                 completed_days_list.append(current_day)
             progress['completed_days'] = set(completed_days_list) 
             progress['current_day'] = min(15, current_day + 1)
-    
-    db.save_user_progress(user_id, progress)
-     
+        
+        db.save_user_progress(user_id, progress)
+        
         # Check for achievements
         new_achievements = check_and_unlock_achievements(user_id)
         if new_achievements:
