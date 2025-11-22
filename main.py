@@ -3273,28 +3273,7 @@ Choose from the menu below to start your journey! 🚀"""
             new_achievements = check_and_unlock_achievements(user_id)
             if new_achievements:
                 send_achievement_notification(self.bot, user_id, new_achievements)
-                
-                elif data.startswith("complete_exercise_"):
-                    parts = data.split("_")
-                    day_num = int(parts[2])
-                    exercise_num = int(parts[3])
-                    exercise_type = parts[4]
-                    
-                    new_achievements = complete_exercise(user_id, day_num, exercise_type)
-                    
-                    # Send confirmation
-                    language = self.get_user_language(user_id)
-                    if language == 'ar':
-                        confirm_text = f"✅ **تم إكمال التمرين!**\n\nتم تحديث تقدمك. استمر في العمل الجيد! 💪"
-                    else:
-                        confirm_text = f"✅ **Exercise Completed!**\n\nYour progress has been updated. Keep up the good work! 💪"
-                    
-                    self.bot.send_message(chat_id, confirm_text)
-                    
-                    # Send achievement notifications if any
-                    if new_achievements:
-                        send_achievement_notification(self.bot, user_id, new_achievements)
-        
+                        
         elif data.startswith("complete_task_"):
             parts = data.split("_")
             day_num = int(parts[2])
