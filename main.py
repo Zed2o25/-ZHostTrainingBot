@@ -3120,46 +3120,46 @@ Choose from the menu below to start your journey! 🚀"""
             self.start_quiz(chat_id, user_id, day_num)
     
     def send_day_content(self, chat_id, user_id, day_num):
-    """Send complete day content to user with comprehensive task tracking"""
-    # Check sequential progression
-    if not can_access_day(user_id, day_num):
+        """Send complete day content to user with comprehensive task tracking"""
+        # Check sequential progression
+        if not can_access_day(user_id, day_num):
+            language = self.get_user_language(user_id)
+            progress = db.get_user_progress(user_id)
+            current_day = progress.get("current_day", 1) if progress else 1
+            
+            if language == 'ar':
+                error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
+            else:
+                error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
+            
+            self.bot.send_message(chat_id, error_text)
+            return
+        
+        day_data = TRAINING_DATA.get(day_num)
+        if not day_data:
+            error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
+            self.bot.send_message(chat_id, error_text)
+            return
+        
+        # Update streak
+        update_streak(user_id)
+        
+        # Send day content with completion status
+        content = self.format_day_content_with_completion(day_data, user_id, day_num)
+        self.bot.send_message(chat_id, content)
+        
+        # Send comprehensive task tracking keyboard
         language = self.get_user_language(user_id)
-        progress = db.get_user_progress(user_id)
-        current_day = progress.get("current_day", 1) if progress else 1
+        task_keyboard = create_comprehensive_task_tracking(day_data, user_id, day_num, language)
+        
+        completed_count, total_tasks = get_day_completion_stats(user_id, day_num)
         
         if language == 'ar':
-            error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
+            progress_text = f"📊 **تقدم اليوم {day_num}:** {completed_count}/{total_tasks} مكتمل\n\nاختر المهام لإكمالها:"
         else:
-            error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
+            progress_text = f"📊 **Day {day_num} Progress:** {completed_count}/{total_tasks} completed\n\nSelect tasks to complete:"
         
-        self.bot.send_message(chat_id, error_text)
-        return
-    
-    day_data = TRAINING_DATA.get(day_num)
-    if not day_data:
-        error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
-        self.bot.send_message(chat_id, error_text)
-        return
-    
-    # Update streak
-    update_streak(user_id)
-    
-    # Send day content with completion status
-    content = self.format_day_content_with_completion(day_data, user_id, day_num)
-    self.bot.send_message(chat_id, content)
-    
-    # Send comprehensive task tracking keyboard
-    language = self.get_user_language(user_id)
-    task_keyboard = create_comprehensive_task_tracking(day_data, user_id, day_num, language)
-    
-    completed_count, total_tasks = get_day_completion_stats(user_id, day_num)
-    
-    if language == 'ar':
-        progress_text = f"📊 **تقدم اليوم {day_num}:** {completed_count}/{total_tasks} مكتمل\n\nاختر المهام لإكمالها:"
-    else:
-        progress_text = f"📊 **Day {day_num} Progress:** {completed_count}/{total_tasks} completed\n\nSelect tasks to complete:"
-    
-    self.bot.send_message(chat_id, progress_text, task_keyboard)
+        self.bot.send_message(chat_id, progress_text, task_keyboard)
 def format_day_content_with_completion(self, day_data, user_id, day_num):
     """Format day content showing completion status for all tasks"""
     language = self.get_user_language(user_id)
