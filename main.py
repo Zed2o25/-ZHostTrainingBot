@@ -3319,45 +3319,45 @@ Choose from the menu below to start your journey! 🚀"""
             # Start the quiz
             self.start_quiz(chat_id, user_id, day_num)
     
-def send_day_content(self, chat_id, user_id, day_num):
-    """Send complete day content to user with simple completion system"""
-    # Check sequential progression
-    if not can_access_day(user_id, day_num):
+    def send_day_content(self, chat_id, user_id, day_num):
+        """Send complete day content to user with simple completion system"""
+        # Check sequential progression
+        if not can_access_day(user_id, day_num):
+            language = self.get_user_language(user_id)
+            progress = db.get_user_progress(user_id)
+            current_day = progress.get("current_day", 1) if progress else 1
+            
+            if language == 'ar':
+                error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
+            else:
+                error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
+            
+            self.bot.send_message(chat_id, error_text)
+            return
+        
+        day_data = TRAINING_DATA.get(day_num)
+        if not day_data:
+            error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
+            self.bot.send_message(chat_id, error_text)
+            return
+        
+        # Update streak
+        update_streak(user_id)
+        
+        # Send day content
+        content = self.format_day_content(day_data, user_id, day_num)
+        self.bot.send_message(chat_id, content)
+        
+        # Send simple completion keyboard
         language = self.get_user_language(user_id)
-        progress = db.get_user_progress(user_id)
-        current_day = progress.get("current_day", 1) if progress else 1
-        
+        completion_keyboard = create_simple_day_completion(user_id, day_num, language)
+    
         if language == 'ar':
-            error_text = f"⏳ يجب إكمال اليوم {current_day} أولاً للوصول إلى اليوم {day_num}"
+            progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
         else:
-            error_text = f"⏳ You need to complete Day {current_day} first to access Day {day_num}"
-        
-        self.bot.send_message(chat_id, error_text)
-        return
+            progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
     
-    day_data = TRAINING_DATA.get(day_num)
-    if not day_data:
-        error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
-        self.bot.send_message(chat_id, error_text)
-        return
-    
-    # Update streak
-    update_streak(user_id)
-    
-    # Send day content
-    content = self.format_day_content(day_data, user_id, day_num)
-    self.bot.send_message(chat_id, content)
-    
-    # Send simple completion keyboard
-    language = self.get_user_language(user_id)
-    completion_keyboard = create_simple_day_completion(user_id, day_num, language)
-
-    if language == 'ar':
-        progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
-    else:
-        progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
-
-    self.bot.send_message(chat_id, progress_text, completion_keyboard)
+        self.bot.send_message(chat_id, progress_text, completion_keyboard)
     
 def format_day_content(self, day_data, user_id, day_num):
     """Format complete day content with all materials"""
