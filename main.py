@@ -4,6 +4,8 @@ import sys
 from flask import Flask
 import threading
 from datetime import datetime
+import schedule
+from datetime import time
 
 # Configure logging
 logging.basicConfig(
@@ -1869,12 +1871,101 @@ Graduation Celebration (45 minutes): Share future plans"""
 })
 
 # =============================================================================
+# USER PROGRESS INITIALIZATION FUNCTION
+# =============================================================================
+
+def initialize_user_progress(user_id):
+    """Initialize or reset user progress with comprehensive tracking"""
+    user_progress[user_id] = {
+        "current_day": 1,
+        "completed_days": set(),
+        "quiz_scores": {},
+        "last_activity": datetime.now().isoformat(),
+        "streak_count": 0,
+        "last_active_date": datetime.now().date().isoformat(),
+        "completed_voice_exercises": 0,
+        "breathing_sessions_completed": 0,
+        "storytelling_skills": 0,
+        "total_study_time": 0,
+        "achievements_unlocked": []
+    }
+    
+    # Initialize reminder preferences
+    user_reminder_preferences[user_id] = {
+        "breathing_reminders": True,
+        "daily_reminders": True,
+        "quiz_reminders": True
+    }
+    
+    # Initialize language to Arabic by default
+    user_language[user_id] = 'ar'
+    
+    logging.info(f"✅ Initialized progress for user {user_id}")
+
+# =============================================================================
 # USER PROGRESS TRACKING AND QUIZ STATE MANAGEMENT
 # =============================================================================
 
 user_progress = {}
 user_language = {}
 user_quiz_state = {}
+# Enhanced user tracking
+user_reminder_preferences = {}
+user_achievements = {}
+
+# Breathing reminder times (6 times daily)
+BREATHING_REMINDER_TIMES = [
+    time(8, 0),   # 8:00 AM - Morning start
+    time(11, 0),  # 11:00 AM - Mid-morning
+    time(14, 0),  # 2:00 PM - After lunch
+    time(17, 0),  # 5:00 PM - Evening
+    time(20, 0),  # 8:00 PM - Night
+    time(22, 0)   # 10:00 PM - Before sleep
+]
+
+# Achievement system
+ACHIEVEMENTS = {
+    "early_bird": {
+        "name_ar": "طائر الصباح",
+        "name_en": "Early Bird", 
+        "description_ar": "أكمل 5 أيام متتالية",
+        "description_en": "Complete 5 days in a row",
+        "icon": "🐦",
+        "condition": lambda user_data: user_data.get("streak_count", 0) >= 5
+    },
+    "quiz_master": {
+        "name_ar": "سيد الاختبارات",
+        "name_en": "Quiz Master",
+        "description_ar": "احصل على 90%+ في 3 اختبارات",
+        "description_en": "Score 90%+ on 3 quizzes", 
+        "icon": "🏆",
+        "condition": lambda user_data: len([score for score in user_data.get("quiz_scores", {}).values() if score >= 0.9]) >= 3
+    },
+    "vocal_athlete": {
+        "name_ar": "رياضي الصوت",
+        "name_en": "Vocal Athlete",
+        "description_ar": "أكمل جميع تمارين الصوت",
+        "description_en": "Complete all voice exercises",
+        "icon": "🎤",
+        "condition": lambda user_data: user_data.get("completed_voice_exercises", 0) >= 15
+    },
+    "breathing_master": {
+        "name_ar": "سيد التنفس",
+        "name_en": "Breathing Master", 
+        "description_ar": "أكمل 30 جلسة تنفس",
+        "description_en": "Complete 30 breathing sessions",
+        "icon": "💨",
+        "condition": lambda user_data: user_data.get("breathing_sessions_completed", 0) >= 30
+    },
+    "storyteller": {
+        "name_ar": "راوي القصص",
+        "name_en": "Storyteller",
+        "description_ar": "أتقن جميع تقنيات سرد القصص", 
+        "description_en": "Master all storytelling techniques",
+        "icon": "📖",
+        "condition": lambda user_data: user_data.get("storytelling_skills", 0) >= 80
+    }
+}
 
 @app.route('/')
 def home():
@@ -1909,7 +2000,107 @@ def home():
 def health():
     return {"status": "healthy", "service": "audio_training_bot"}
 
-# ... [REST OF THE BOT CODE REMAINS THE SAME AS BEFORE - all the functions for running the bot]
+# Reminder System Class
+class ReminderSystem:
+    def __init__(self, send_message_func):
+        self.send_message = send_message_func
+        self.setup_schedule()
+    
+    def setup_schedule(self):
+        """Setup scheduled reminders"""
+        for reminder_time in BREATHING_REMINDER_TIMES:
+            schedule.every().day.at(reminder_time.strftime("%H:%M")).do(self.send_breathing_reminders)
+    
+    def send_breathing_reminders(self):
+        """Send breathing exercise reminders to all users with preferences enabled"""
+        for user_id, preferences in user_reminder_preferences.items():
+            if preferences.get("breathing_reminders", True):
+                language = user_language.get(user_id, 'ar')
+                if language == 'ar':
+                    message = "💨 وقت تمرين التنفس!\n\nخذ دقيقة للتنفس بعمق:\n• شهيق من الأنف (4 ثوان)\n• احتفظ بالنفس (4 ثوان)\n• زفير من الفم (6 ثوان)\n\nهذا يحسن جودة صوتك ويهدئ الأعصاب! 🎯"
+                else:
+                    message = "💨 Breathing Exercise Time!\n\nTake a minute for deep breathing:\n• Inhale through nose (4 seconds)\n• Hold breath (4 seconds)\n• Exhale through mouth (6 seconds)\n\nThis improves your voice quality and calms nerves! 🎯"
+                
+                try:
+                    self.send_message(user_id, message)
+                except Exception as e:
+                    logging.error(f"Failed to send reminder to {user_id}: {e}")
+    
+    def run_pending(self):
+        """Run pending scheduled tasks"""
+        schedule.run_pending()
+
+# Helper functions
+def send_breathing_reminder(send_func, user_id):
+    """Send immediate breathing exercise"""
+    language = user_language.get(user_id, 'ar')
+    if language == 'ar':
+        message = "💨 **تمرين التنفس العميق**\n\nلتحسين جودة صوتك:\n\n1. 🤲 اجلس مستقيماً\n2. 🌬️ شهيق من الأنف (4 ثوان)\n3. ⏱️ احتفظ بالنفس (4 ثوان)\n4. 🗣️ زفير من الفم (6 ثوان)\n5. 🔁 كرر 5 مرات\n\n🎯 النتيجة: صوت أوضح وطاقة أفضل!"
+    else:
+        message = "💨 **Deep Breathing Exercise**\n\nTo improve your voice quality:\n\n1. 🤲 Sit straight\n2. 🌬️ Inhale through nose (4 seconds)\n3. ⏱️ Hold breath (4 seconds)\n4. 🗣️ Exhale through mouth (6 seconds)\n5. 🔁 Repeat 5 times\n\n🎯 Result: Clearer voice and better energy!"
+    
+    send_func(user_id, message)
+    
+    # Track completion
+    if user_id in user_progress:
+        user_progress[user_id]["breathing_sessions_completed"] = user_progress[user_id].get("breathing_sessions_completed", 0) + 1
+
+def format_progress_dashboard(user_id, language):
+    """Format user progress dashboard"""
+    progress = user_progress.get(user_id, {})
+    current_day = progress.get("current_day", 1)
+    completed_days = len(progress.get("completed_days", set()))
+    total_days = 15
+    
+    if language == 'ar':
+        dashboard = f"""📊 **لوحة التقدم الشخصي**
+
+🎯 **التقدم العام:**
+• اليوم الحالي: {current_day}/{total_days}
+• الأيام المكتملة: {completed_days}/{total_days}
+• نسبة الإنجاز: {(completed_days/total_days)*100:.1f}%
+
+🏆 **الإنجازات:**
+• تمارين الصوت المكتملة: {progress.get('completed_voice_exercises', 0)}
+• جلسات التنفس: {progress.get('breathing_sessions_completed', 0)}
+• مهارات سرد القصص: {progress.get('storytelling_skills', 0)}%
+
+📈 **التقييمات:**
+• متوسط نتائج الاختبارات: {self.calculate_average_quiz_score(user_id):.1f}%
+• أيام متتالية: {progress.get('streak_count', 0)}
+
+💪 **استمر في التقدم!**"""
+    else:
+        dashboard = f"""📊 **Personal Progress Dashboard**
+
+🎯 **Overall Progress:**
+• Current Day: {current_day}/{total_days}
+• Completed Days: {completed_days}/{total_days}
+• Completion Rate: {(completed_days/total_days)*100:.1f}%
+
+🏆 **Achievements:**
+• Voice Exercises Completed: {progress.get('completed_voice_exercises', 0)}
+• Breathing Sessions: {progress.get('breathing_sessions_completed', 0)}
+• Storytelling Skills: {progress.get('storytelling_skills', 0)}%
+
+📈 **Assessments:**
+• Average Quiz Scores: {self.calculate_average_quiz_score(user_id):.1f}%
+• Consecutive Days: {progress.get('streak_count', 0)}
+
+💪 **Keep Going!**"""
+    
+    return dashboard
+
+def calculate_average_quiz_score(user_id):
+    """Calculate average quiz score for user"""
+    progress = user_progress.get(user_id, {})
+    quiz_scores = progress.get("quiz_scores", {})
+    if not quiz_scores:
+        return 0
+    
+    total_score = sum(quiz_scores.values())
+    total_possible = len(quiz_scores) * 2  # 2 questions per quiz
+    return (total_score / total_possible) * 100
 
 def run_simple_bot(token):
     """Run a simple Telegram bot using requests"""
@@ -1917,6 +2108,12 @@ def run_simple_bot(token):
     import time
     
     BASE_URL = f"https://api.telegram.org/bot{token}"
+    
+    # Initialize reminder system
+    def bot_send_message(chat_id, text):
+        send_message(chat_id, text)
+    
+    reminder_system = ReminderSystem(bot_send_message)
     
     def get_updates(offset=None):
         url = f"{BASE_URL}/getUpdates"
@@ -1946,14 +2143,16 @@ def run_simple_bot(token):
             return {"ok": False}
     
     def create_main_keyboard(language):
-        """Create main inline keyboard based on language"""
+        """Create enhanced main keyboard with new features"""
         if language == 'ar':
             return {
                 "inline_keyboard": [
                     [{"text": "📅 التدريب اليومي", "callback_data": "today"}],
                     [{"text": "📚 جميع الأيام", "callback_data": "all_days"}],
-                    [{"text": "📊 تقدمي", "callback_data": "progress"}],
+                    [{"text": "📊 لوحة التقدم", "callback_data": "dashboard"}],
                     [{"text": "❓ الاختبارات", "callback_data": "quizzes"}],
+                    [{"text": "🏆 إنجازاتي", "callback_data": "achievements"}],
+                    [{"text": "⚙️ الإعدادات", "callback_data": "settings"}],
                     [{"text": "🌐 English", "callback_data": "switch_language"}]
                 ]
             }
@@ -1962,9 +2161,40 @@ def run_simple_bot(token):
                 "inline_keyboard": [
                     [{"text": "📅 Today's Training", "callback_data": "today"}],
                     [{"text": "📚 All Days", "callback_data": "all_days"}],
-                    [{"text": "📊 My Progress", "callback_data": "progress"}],
+                    [{"text": "📊 Progress Dashboard", "callback_data": "dashboard"}],
                     [{"text": "❓ Quizzes", "callback_data": "quizzes"}],
+                    [{"text": "🏆 My Achievements", "callback_data": "achievements"}],
+                    [{"text": "⚙️ Settings", "callback_data": "settings"}],
                     [{"text": "🌐 العربية", "callback_data": "switch_language"}]
+                ]
+            }
+
+    def create_settings_keyboard(language, user_id):
+        """Create settings keyboard"""
+        preferences = user_reminder_preferences.get(user_id, {})
+        
+        if language == 'ar':
+            breathing_text = "🔔 تمارين التنفس: ✅" if preferences.get("breathing_reminders", True) else "🔔 تمارين التنفس: ❌"
+            daily_text = "📅 التذكير اليومي: ✅" if preferences.get("daily_reminders", True) else "📅 التذكير اليومي: ❌"
+            
+            return {
+                "inline_keyboard": [
+                    [{"text": breathing_text, "callback_data": "toggle_breathing"}],
+                    [{"text": daily_text, "callback_data": "toggle_daily"}],
+                    [{"text": "💨 تمرين تنفس الآن", "callback_data": "breathing_now"}],
+                    [{"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}]
+                ]
+            }
+        else:
+            breathing_text = "🔔 Breathing Exercises: ✅" if preferences.get("breathing_reminders", True) else "🔔 Breathing Exercises: ❌"
+            daily_text = "📅 Daily Reminders: ✅" if preferences.get("daily_reminders", True) else "📅 Daily Reminders: ❌"
+            
+            return {
+                "inline_keyboard": [
+                    [{"text": breathing_text, "callback_data": "toggle_breathing"}],
+                    [{"text": daily_text, "callback_data": "toggle_daily"}],
+                    [{"text": "💨 Breathing Exercise Now", "callback_data": "breathing_now"}],
+                    [{"text": "🏠 Main Menu", "callback_data": "main_menu"}]
                 ]
             }
     
@@ -2198,12 +2428,7 @@ def run_simple_bot(token):
         
         # Update user progress
         if user_id not in user_progress:
-            user_progress[user_id] = {
-                "current_day": 1,
-                "completed_days": set(),
-                "quiz_scores": {},
-                "last_activity": datetime.now().isoformat()
-            }
+            initialize_user_progress(user_id)
         
         user_progress[user_id]['quiz_scores'][quiz_state['day']] = score
         
@@ -2218,6 +2443,7 @@ def run_simple_bot(token):
     
     while True:
         try:
+            reminder_system.run_pending()
             updates = get_updates(last_update_id)
             
             if updates.get("ok"):
@@ -2230,18 +2456,9 @@ def run_simple_bot(token):
                         text = update["message"]["text"]
                         user_id = update["message"]["from"]["id"]
                         
-                        # Initialize user progress
+                        # Initialize user progress using the new function
                         if user_id not in user_progress:
-                            user_progress[user_id] = {
-                                "current_day": 1,
-                                "completed_days": set(),
-                                "quiz_scores": {},
-                                "last_activity": datetime.now().isoformat()
-                            }
-                        
-                        # Initialize language
-                        if user_id not in user_language:
-                            user_language[user_id] = 'ar'
+                            initialize_user_progress(user_id)
                         
                         if text == "/start":
                             welcome_text = get_text(user_id,
@@ -2311,6 +2528,13 @@ Choose from the menu below to start your journey! 🚀"""
                             current_day = progress.get("current_day", 1)
                             send_day_content(chat_id, user_id, current_day)
                         
+                        elif text == "/dashboard":
+                            dashboard = format_progress_dashboard(user_id, user_language.get(user_id, 'ar'))
+                            send_message(chat_id, dashboard)
+                        
+                        elif text == "/breathing":
+                            send_breathing_reminder(lambda uid, msg: send_message(chat_id, msg), user_id)
+                        
                         else:
                             help_text = get_text(user_id,
                                 "👋 استخدم /menu للوصول إلى القائمة الرئيسية والتعرف على جميع الميزات المتاحة!",
@@ -2325,16 +2549,9 @@ Choose from the menu below to start your journey! 🚀"""
                         data = query["data"]
                         user_id = query["from"]["id"]
                         
-                        # Initialize user if not exists
+                        # Initialize user progress using the new function
                         if user_id not in user_progress:
-                            user_progress[user_id] = {
-                                "current_day": 1,
-                                "completed_days": set(),
-                                "quiz_scores": {},
-                                "last_activity": datetime.now().isoformat()
-                            }
-                        if user_id not in user_language:
-                            user_language[user_id] = 'ar'
+                            initialize_user_progress(user_id)
                         
                         # Answer callback query
                         requests.post(f"{BASE_URL}/answerCallbackQuery", json={
@@ -2370,6 +2587,63 @@ Choose from the menu below to start your journey! 🚀"""
                                 "📚 **All Training Days**\n\nSelect a day to view its content:"
                             )
                             send_message(chat_id, days_text, create_days_keyboard(get_user_language(user_id)))
+                        
+                        elif data == "dashboard":
+                            dashboard = format_progress_dashboard(user_id, user_language.get(user_id, 'ar'))
+                            send_message(chat_id, dashboard)
+                        
+                        elif data == "achievements":
+                            achievements = user_achievements.get(user_id, [])
+                            language = user_language.get(user_id, 'ar')
+                            
+                            if language == 'ar':
+                                if achievements:
+                                    achievement_text = "🏆 **إنجازاتك:**\n\n"
+                                    for achievement_id in achievements:
+                                        achievement = ACHIEVEMENTS[achievement_id]
+                                        achievement_text += f"{achievement['icon']} **{achievement['name_ar']}**\n{achievement['description_ar']}\n\n"
+                                else:
+                                    achievement_text = "🎯 لم تحصل على أي إنجازات بعد. استمر في التعلم! 💪"
+                            else:
+                                if achievements:
+                                    achievement_text = "🏆 **Your Achievements:**\n\n"
+                                    for achievement_id in achievements:
+                                        achievement = ACHIEVEMENTS[achievement_id]
+                                        achievement_text += f"{achievement['icon']} **{achievement['name_en']}**\n{achievement['description_en']}\n\n"
+                                else:
+                                    achievement_text = "🎯 You haven't unlocked any achievements yet. Keep learning! 💪"
+                            
+                            send_message(chat_id, achievement_text)
+                        
+                        elif data == "settings":
+                            settings_text = get_text(user_id,
+                                "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
+                                "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
+                            )
+                            send_message(chat_id, settings_text, create_settings_keyboard(user_language.get(user_id, 'ar'), user_id))
+                        
+                        elif data == "toggle_breathing":
+                            if user_id not in user_reminder_preferences:
+                                user_reminder_preferences[user_id] = {"breathing_reminders": True, "daily_reminders": True}
+                            user_reminder_preferences[user_id]["breathing_reminders"] = not user_reminder_preferences[user_id].get("breathing_reminders", True)
+                            settings_text = get_text(user_id,
+                                "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
+                                "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
+                            )
+                            send_message(chat_id, settings_text, create_settings_keyboard(user_language.get(user_id, 'ar'), user_id))
+                        
+                        elif data == "toggle_daily":
+                            if user_id not in user_reminder_preferences:
+                                user_reminder_preferences[user_id] = {"breathing_reminders": True, "daily_reminders": True}
+                            user_reminder_preferences[user_id]["daily_reminders"] = not user_reminder_preferences[user_id].get("daily_reminders", True)
+                            settings_text = get_text(user_id,
+                                "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
+                                "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
+                            )
+                            send_message(chat_id, settings_text, create_settings_keyboard(user_language.get(user_id, 'ar'), user_id))
+                        
+                        elif data == "breathing_now":
+                            send_breathing_reminder(lambda uid, msg: send_message(chat_id, msg), user_id)
                         
                         elif data == "progress":
                             progress = user_progress.get(user_id, {})
