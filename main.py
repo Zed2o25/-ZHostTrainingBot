@@ -3008,7 +3008,8 @@ Choose from the menu below to start your journey! 🚀"""
         self.start_quiz(chat_id, user_id, day_num)
     
     def send_day_content(self, chat_id, user_id, day_num):
-    """Send day content with progression check"""
+    """Send complete day content to user with comprehensive task tracking"""
+    # Check sequential progression
     if not can_access_day(user_id, day_num):
         language = self.get_user_language(user_id)
         progress = db.get_user_progress(user_id)
@@ -3022,47 +3023,31 @@ Choose from the menu below to start your journey! 🚀"""
         self.bot.send_message(chat_id, error_text)
         return
     
-    # Continue with existing day content logic...
     day_data = TRAINING_DATA.get(day_num)
-        if not day_data:
-            error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
-            self.bot.send_message(chat_id, error_text)
-            return
-        
-        # Update streak
-        update_streak(user_id)
-        
-        # Send day content
-        content = self.format_day_content(day_data, user_id, day_num)
-        self.bot.send_message(chat_id, content)
-        
-        # Send exercise completion keyboard for the first practical exercise
-        for i, material in enumerate(day_data['materials'], 1):
-            material_title = material.get('title_ar', '') or material.get('title_en', '')
-            if "تمرين" in material_title or "Exercise" in material_title:
-                exercise_type = "vocal"
-                if "تنفس" in material_title or "breathing" in material_title.lower():
-                    exercise_type = "breathing"
-                elif "قصة" in material_title or "story" in material_title.lower():
-                    exercise_type = "storytelling"
-                elif "تسجيل" in material_title or "recording" in material_title.lower():
-                    exercise_type = "recording"
-                
-                keyboard = create_exercise_keyboard(day_num, i, exercise_type, self.get_user_language(user_id))
-                exercise_text = self.get_text(user_id, 
-                    f"**تمرين عملي {i}**\n\nهل أكملت هذا التمرين؟",
-                    f"**Practical Exercise {i}**\n\nDid you complete this exercise?")
-                self.bot.send_message(chat_id, exercise_text, keyboard)
-                break
-        
-        # Send quiz option
-        quiz_title = day_data['quiz']['title_ar'] if self.get_user_language(user_id) == 'ar' else day_data['quiz']['title_en']
-        quiz_text = self.get_text(user_id, 
-                           f"**{quiz_title}**\n\nهل تريد اختبار معرفتك؟",
-                           f"**{quiz_title}**\n\nDo you want to test your knowledge?")
-        
-        self.bot.send_message(chat_id, quiz_text, create_quiz_keyboard(day_num, self.get_user_language(user_id)))
+    if not day_data:
+        error_text = self.get_text(user_id, "❌ اليوم غير موجود", "❌ Day not found")
+        self.bot.send_message(chat_id, error_text)
+        return
     
+    # Update streak
+    update_streak(user_id)
+    
+    # Send day content with completion status
+    content = self.format_day_content_with_completion(day_data, user_id, day_num)
+    self.bot.send_message(chat_id, content)
+    
+    # Send comprehensive task tracking keyboard
+    language = self.get_user_language(user_id)
+    task_keyboard = create_comprehensive_task_tracking(day_data, user_id, day_num, language)
+    
+    completed_count, total_tasks = get_day_completion_stats(user_id, day_num)
+    
+    if language == 'ar':
+        progress_text = f"📊 **تقدم اليوم {day_num}:** {completed_count}/{total_tasks} مكتمل\n\nاختر المهام لإكمالها:"
+    else:
+        progress_text = f"📊 **Day {day_num} Progress:** {completed_count}/{total_tasks} completed\n\nSelect tasks to complete:"
+    
+    self.bot.send_message(chat_id, progress_text, task_keyboard)
     def format_day_content(self, day_data, user_id, day_num):
         """Format complete day content with all materials and exercise tracking"""
         language = self.get_user_language(user_id)
