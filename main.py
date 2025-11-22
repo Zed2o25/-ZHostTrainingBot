@@ -2393,7 +2393,7 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
     if not progress:
         progress = {"completed_exercises": {}}
     
-    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set())
+    completed_tasks = progress.get("completed_exercises", {}).get(day_num, [])
     
     tasks = []
     
@@ -2489,7 +2489,7 @@ def get_day_completion_stats(user_id, day_num):
     if not progress:
         return 0, 0
     
-    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set())
+    completed_tasks = progress.get("completed_exercises", {}).get(day_num, [])
     day_data = TRAINING_DATA.get(day_num, {})
     
     # Count total tasks (materials + quiz)
@@ -2562,7 +2562,7 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
     if not progress:
         progress = {"completed_exercises": {}}
     
-    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set())
+    completed_tasks = progress.get("completed_exercises", {}).get(day_num, [])
     
     tasks = []
     
@@ -2657,7 +2657,7 @@ def get_day_completion_stats(user_id, day_num):
     if not progress:
         return 0, 0
     
-    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set())
+    completed_tasks = progress.get("completed_exercises", {}).get(day_num, [])
     day_data = TRAINING_DATA.get(day_num, {})
     
     # Count total tasks (materials + quiz)
@@ -3188,7 +3188,7 @@ Choose from the menu below to start your journey! 🚀"""
         title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
         
         progress = db.get_user_progress(user_id)
-        completed_tasks = progress.get("completed_exercises", {}).get(day_num, set()) if progress else set()
+        completed_tasks = progress.get("completed_exercises", {}).get(day_num, []) if progress else set()
         
         content = f"**{title}**\n\n"
         
