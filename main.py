@@ -3112,37 +3112,172 @@ Choose from the menu below to start your journey! 🚀"""
     def handle_callback(self, chat_id, user_id, data):
         """Handle callback queries"""
         logging.info(f"📱 Callback received: {data} from user {user_id}")
-        if data == "main_menu":
-            menu_text = self.get_text(user_id,
-                "🏫 **القائمة الرئيسية**\n\nاختر مسار التعلم:",
-                "🏫 **Main Menu**\n\nChoose your learning path:"
-            )
-            self.bot.send_message(chat_id, menu_text, create_main_keyboard(self.get_user_language(user_id)))
-        
-        elif data == "switch_language":
-            preferences = db.get_user_preferences(user_id)
-            if preferences:
-                current_lang = preferences.get("language", "ar")
-                new_lang = 'en' if current_lang == 'ar' else 'ar'
-                preferences["language"] = new_lang
-                db.save_user_preferences(user_id, preferences)
-                
-                confirm_text = self.get_text(user_id,
-                    "✅ تم تغيير اللغة إلى العربية",
-                    "✅ Language changed to English"
+         # Answer callback query first
+        self.bot.answer_callback_query(callback_query_id)
+        try:
+            if data == "main_menu":
+                menu_text = self.get_text(user_id,
+                    "🏫 **القائمة الرئيسية**\n\nاختر مسار التعلم:",
+                    "🏫 **Main Menu**\n\nChoose your learning path:"
                 )
-                self.bot.send_message(chat_id, confirm_text, create_main_keyboard(new_lang))
-
-        elif data.startswith("complete_task_"):
-            if data == "already_completed":
-                # Task is already completed, do nothing or show message
+                self.bot.send_message(chat_id, menu_text, create_main_keyboard(self.get_user_language(user_id)))
+            
+            elif data == "switch_language":
+                preferences = db.get_user_preferences(user_id)
+                if preferences:
+                    current_lang = preferences.get("language", "ar")
+                    new_lang = 'en' if current_lang == 'ar' else 'ar'
+                    preferences["language"] = new_lang
+                    db.save_user_preferences(user_id, preferences)
+                    
+                    confirm_text = self.get_text(user_id,
+                        "✅ تم تغيير اللغة إلى العربية",
+                        "✅ Language changed to English"
+                    )
+                    self.bot.send_message(chat_id, confirm_text, create_main_keyboard(new_lang))
+    
+            elif data.startswith("complete_task_"):
+                if data == "already_completed":
+                    # Task is already completed, do nothing or show message
+                    language = self.get_user_language(user_id)
+                    if language == 'ar':
+                        message = "✅ هذه المهمة مكتملة بالفعل!"
+                    else:
+                        message = "✅ This task is already completed!"
+                    self.bot.send_message(chat_id, message)
+                else:
+                    parts = data.split("_")
+                    day_num = int(parts[2])
+                    task_num = int(parts[3])
+                    task_type = parts[4]
+                    
+                    new_achievements = mark_task_completed(user_id, day_num, task_num, task_type)
+                    
+                    # Send confirmation
+                    language = self.get_user_language(user_id)
+                    if language == 'ar':
+                        confirm_text = f"✅ **تم إكمال المهمة!**\n\nتم تحديث تقدمك. استمر في العمل الجيد! 💪"
+                    else:
+                        confirm_text = f"✅ **Task Completed!**\n\nYour progress has been updated. Keep up the good work! 💪"
+                    
+                    self.bot.send_message(chat_id, confirm_text)
+                    
+                    # Refresh the day view to show updated completion status
+                    self.send_day_content(chat_id, user_id, day_num)
+                    
+                    # Send achievement notifications if any
+                    if new_achievements:
+                        send_achievement_notification(self.bot, user_id, new_achievements)
+                
+            elif data == "today":
+                progress = db.get_user_progress(user_id)
+                current_day = progress.get("current_day", 1) if progress else 1
+                self.send_day_content(chat_id, user_id, current_day)
+            
+            elif data == "all_days":
+                days_text = self.get_text(user_id,
+                    "📚 **جميع أيام التدريب**\n\nاختر يوماً لعرض محتواه:",
+                    "📚 **All Training Days**\n\nSelect a day to view its content:"
+                )
+                self.bot.send_message(chat_id, days_text, create_days_keyboard(self.get_user_language(user_id)))
+            
+            elif data == "dashboard":
+                dashboard = format_progress_dashboard(user_id, self.get_user_language(user_id))
+                self.bot.send_message(chat_id, dashboard)
+            
+            elif data == "achievements":
+                self.show_achievements(chat_id, user_id)
+            
+            elif data == "settings":
+                settings_text = self.get_text(user_id,
+                    "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
+                    "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
+                )
+                self.bot.send_message(chat_id, settings_text, create_settings_keyboard(self.get_user_language(user_id), user_id))
+            
+            elif data == "toggle_breathing":
+                preferences = db.get_user_preferences(user_id)
+                if preferences:
+                    preferences["breathing_reminders"] = not preferences.get("breathing_reminders", True)
+                    db.save_user_preferences(user_id, preferences)
+                    settings_text = self.get_text(user_id,
+                        "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
+                        "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
+                    )
+                    self.bot.send_message(chat_id, settings_text, create_settings_keyboard(self.get_user_language(user_id), user_id))
+            
+            elif data == "toggle_daily":
+                preferences = db.get_user_preferences(user_id)
+                if preferences:
+                    preferences["daily_reminders"] = not preferences.get("daily_reminders", True)
+                    db.save_user_preferences(user_id, preferences)
+                    settings_text = self.get_text(user_id,
+                        "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
+                        "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
+                    )
+                    self.bot.send_message(chat_id, settings_text, create_settings_keyboard(self.get_user_language(user_id), user_id))
+            
+            elif data == "breathing_now":
+                self.send_breathing_exercise(chat_id, user_id)
+            
+            elif data.startswith("day_"):
+                day_num = int(data.split("_")[1])
+                self.send_day_content(chat_id, user_id, day_num)
+            
+            elif data.startswith("start_quiz_"):
+                day_num = int(data.split("_")[2])
+                self.start_quiz(chat_id, user_id, day_num)
+            
+            elif data.startswith("answer_"):
+                answer_index = int(data.split("_")[1])
+                self.handle_quiz_answer(chat_id, user_id, answer_index)
+    
+            elif data.startswith("complete_day_"):
+                day_num = int(data.split("_")[2])
+                
+                # Mark day as completed
+                progress = db.get_user_progress(user_id)
+                if not progress:
+                    initialize_user_progress(user_id)
+                    progress = db.get_user_progress(user_id)
+                
+                # Initialize completed days if not exists
+                if "completed_days" not in progress:
+                    progress["completed_days"] = []
+                
+                # Add day to completed days if not already there
+                if day_num not in progress["completed_days"]:
+                    progress["completed_days"].append(day_num)
+                
+                # Update current day to next day if this is the current day
+                current_day = progress.get("current_day", 1)
+                if day_num == current_day:
+                    progress["current_day"] = min(15, current_day + 1)
+                
+                db.save_user_progress(user_id, progress)
+                
+                # Send confirmation
                 language = self.get_user_language(user_id)
                 if language == 'ar':
-                    message = "✅ هذه المهمة مكتملة بالفعل!"
+                    confirm_text = f"✅ **تم إكمال اليوم {day_num}!**\n\nيمكنك الآن الانتقال إلى اليوم التالي أو اختبار اليوم."
+                    if day_num == current_day:
+                        confirm_text += f"\n\n🔓 اليوم {progress['current_day']} متاح الآن!"
                 else:
-                    message = "✅ This task is already completed!"
-                self.bot.send_message(chat_id, message)
-            else:
+                    confirm_text = f"✅ **Day {day_num} Completed!**\n\nYou can now proceed to the next day or take the day's quiz."
+                    if day_num == current_day:
+                        confirm_text += f"\n\n🔓 Day {progress['current_day']} is now available!"
+                
+                self.bot.send_message(chat_id, confirm_text)
+                
+                # Refresh the day view to show updated status
+                self.send_day_content(chat_id, user_id, day_num)
+                
+                # Check for achievements
+                new_achievements = check_and_unlock_achievements(user_id)
+                if new_achievements:
+                    send_achievement_notification(self.bot, user_id, new_achievements)
+                            
+            elif data.startswith("complete_task_"):
                 parts = data.split("_")
                 day_num = int(parts[2])
                 task_num = int(parts[3])
@@ -3166,161 +3301,31 @@ Choose from the menu below to start your journey! 🚀"""
                 if new_achievements:
                     send_achievement_notification(self.bot, user_id, new_achievements)
             
-        elif data == "today":
-            progress = db.get_user_progress(user_id)
-            current_day = progress.get("current_day", 1) if progress else 1
-            self.send_day_content(chat_id, user_id, current_day)
-        
-        elif data == "all_days":
-            days_text = self.get_text(user_id,
-                "📚 **جميع أيام التدريب**\n\nاختر يوماً لعرض محتواه:",
-                "📚 **All Training Days**\n\nSelect a day to view its content:"
-            )
-            self.bot.send_message(chat_id, days_text, create_days_keyboard(self.get_user_language(user_id)))
-        
-        elif data == "dashboard":
-            dashboard = format_progress_dashboard(user_id, self.get_user_language(user_id))
-            self.bot.send_message(chat_id, dashboard)
-        
-        elif data == "achievements":
-            self.show_achievements(chat_id, user_id)
-        
-        elif data == "settings":
-            settings_text = self.get_text(user_id,
-                "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
-                "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
-            )
-            self.bot.send_message(chat_id, settings_text, create_settings_keyboard(self.get_user_language(user_id), user_id))
-        
-        elif data == "toggle_breathing":
-            preferences = db.get_user_preferences(user_id)
-            if preferences:
-                preferences["breathing_reminders"] = not preferences.get("breathing_reminders", True)
-                db.save_user_preferences(user_id, preferences)
-                settings_text = self.get_text(user_id,
-                    "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
-                    "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
-                )
-                self.bot.send_message(chat_id, settings_text, create_settings_keyboard(self.get_user_language(user_id), user_id))
-        
-        elif data == "toggle_daily":
-            preferences = db.get_user_preferences(user_id)
-            if preferences:
-                preferences["daily_reminders"] = not preferences.get("daily_reminders", True)
-                db.save_user_preferences(user_id, preferences)
-                settings_text = self.get_text(user_id,
-                    "⚙️ **إعدادات التذكيرات**\n\nاختر التذكيرات التي تريد تفعيلها:",
-                    "⚙️ **Reminder Settings**\n\nChoose which reminders to enable:"
-                )
-                self.bot.send_message(chat_id, settings_text, create_settings_keyboard(self.get_user_language(user_id), user_id))
-        
-        elif data == "breathing_now":
-            self.send_breathing_exercise(chat_id, user_id)
-        
-        elif data.startswith("day_"):
-            day_num = int(data.split("_")[1])
-            self.send_day_content(chat_id, user_id, day_num)
-        
-        elif data.startswith("start_quiz_"):
-            day_num = int(data.split("_")[2])
-            self.start_quiz(chat_id, user_id, day_num)
-        
-        elif data.startswith("answer_"):
-            answer_index = int(data.split("_")[1])
-            self.handle_quiz_answer(chat_id, user_id, answer_index)
-
-        elif data.startswith("complete_day_"):
-            day_num = int(data.split("_")[2])
-            
-            # Mark day as completed
-            progress = db.get_user_progress(user_id)
-            if not progress:
-                initialize_user_progress(user_id)
+            elif data.startswith("complete_quiz_"):
+                day_num = int(data.split("_")[2])
+                
+                # Mark quiz as completed in tasks
                 progress = db.get_user_progress(user_id)
-            
-            # Initialize completed days if not exists
-            if "completed_days" not in progress:
-                progress["completed_days"] = []
-            
-            # Add day to completed days if not already there
-            if day_num not in progress["completed_days"]:
-                progress["completed_days"].append(day_num)
-            
-            # Update current day to next day if this is the current day
-            current_day = progress.get("current_day", 1)
-            if day_num == current_day:
-                progress["current_day"] = min(15, current_day + 1)
-            
-            db.save_user_progress(user_id, progress)
-            
-            # Send confirmation
-            language = self.get_user_language(user_id)
-            if language == 'ar':
-                confirm_text = f"✅ **تم إكمال اليوم {day_num}!**\n\nيمكنك الآن الانتقال إلى اليوم التالي أو اختبار اليوم."
-                if day_num == current_day:
-                    confirm_text += f"\n\n🔓 اليوم {progress['current_day']} متاح الآن!"
-            else:
-                confirm_text = f"✅ **Day {day_num} Completed!**\n\nYou can now proceed to the next day or take the day's quiz."
-                if day_num == current_day:
-                    confirm_text += f"\n\n🔓 Day {progress['current_day']} is now available!"
-            
-            self.bot.send_message(chat_id, confirm_text)
-            
-            # Refresh the day view to show updated status
-            self.send_day_content(chat_id, user_id, day_num)
-            
-            # Check for achievements
-            new_achievements = check_and_unlock_achievements(user_id)
-            if new_achievements:
-                send_achievement_notification(self.bot, user_id, new_achievements)
-                        
-        elif data.startswith("complete_task_"):
-            parts = data.split("_")
-            day_num = int(parts[2])
-            task_num = int(parts[3])
-            task_type = parts[4]
-            
-            new_achievements = mark_task_completed(user_id, day_num, task_num, task_type)
-            
-            # Send confirmation
-            language = self.get_user_language(user_id)
-            if language == 'ar':
-                confirm_text = f"✅ **تم إكمال المهمة!**\n\nتم تحديث تقدمك. استمر في العمل الجيد! 💪"
-            else:
-                confirm_text = f"✅ **Task Completed!**\n\nYour progress has been updated. Keep up the good work! 💪"
-            
-            self.bot.send_message(chat_id, confirm_text)
-            
-            # Refresh the day view to show updated completion status
-            self.send_day_content(chat_id, user_id, day_num)
-            
-            # Send achievement notifications if any
-            if new_achievements:
-                send_achievement_notification(self.bot, user_id, new_achievements)
-        
-        elif data.startswith("complete_quiz_"):
-            day_num = int(data.split("_")[2])
-            
-            # Mark quiz as completed in tasks
-            progress = db.get_user_progress(user_id)
-            if not progress:
-                initialize_user_progress(user_id)
-                progress = db.get_user_progress(user_id)
-            
-            if "completed_exercises" not in progress:
-                progress["completed_exercises"] = {}
-            if day_num not in progress["completed_exercises"]:
-                progress["completed_exercises"][day_num] = set()
-            
-            quiz_key = f"quiz_{day_num}"
-            progress["completed_exercises"][day_num].add(quiz_key)
-            db.save_user_progress(user_id, progress)
-            
-            # Start the quiz
-            self.start_quiz(chat_id, user_id, day_num)
+                if not progress:
+                    initialize_user_progress(user_id)
+                    progress = db.get_user_progress(user_id)
+                
+                if "completed_exercises" not in progress:
+                    progress["completed_exercises"] = {}
+                if day_num not in progress["completed_exercises"]:
+                    progress["completed_exercises"][day_num] = set()
+                
+                quiz_key = f"quiz_{day_num}"
+                progress["completed_exercises"][day_num].add(quiz_key)
+                db.save_user_progress(user_id, progress)
+                
+                # Start the quiz
+                self.start_quiz(chat_id, user_id, day_num)
     
     def send_day_content(self, chat_id, user_id, day_num):
         """Send complete day content to user with simple completion system"""
+        logging.info(f"📖 Sending day {day_num} content for user {user_id}")
+        
         # Check sequential progression
         if not can_access_day(user_id, day_num):
             language = self.get_user_language(user_id)
@@ -3346,7 +3351,12 @@ Choose from the menu below to start your journey! 🚀"""
         
         # Send day content
         content = self.format_day_content(day_data, user_id, day_num)
-        self.bot.send_message(chat_id, content)
+        if content:
+            self.bot.send_message(chat_id, content)
+        else:
+            error_text = self.get_text(user_id, "❌ خطأ في تحميل المحتوى", "❌ Error loading content")
+            self.bot.send_message(chat_id, error_text)
+            return
         
         # Send simple completion keyboard
         language = self.get_user_language(user_id)
@@ -3359,21 +3369,30 @@ Choose from the menu below to start your journey! 🚀"""
     
         self.bot.send_message(chat_id, progress_text, completion_keyboard)
     
-def format_day_content(self, day_data, user_id, day_num):
-    """Format complete day content with all materials"""
-    language = self.get_user_language(user_id)
-    title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
-    
-    content = f"**{title}**\n\n"
-    
-    for i, material in enumerate(day_data['materials'], 1):
-        material_title = material['title_ar'] if language == 'ar' else material['title_en']
-        material_content = material['content_ar'] if language == 'ar' else material['content_en']
-        
-        content += f"**{i}. {material_title}**\n"
-        content += f"{material_content}\n\n"
-    
-    return content
+    def format_day_content(self, day_data, user_id, day_num):
+        """Format complete day content with all materials"""
+        try:
+            language = self.get_user_language(user_id)
+            title = day_data.get('title_ar') if language == 'ar' else day_data.get('title_en')
+            
+            if not title:
+                return None
+                
+            content = f"**{title}**\n\n"
+            
+            materials = day_data.get('materials', [])
+            for i, material in enumerate(materials, 1):
+                material_title = material.get('title_ar') if language == 'ar' else material.get('title_en')
+                material_content = material.get('content_ar') if language == 'ar' else material.get('content_en')
+                
+                if material_title and material_content:
+                    content += f"**{i}. {material_title}**\n"
+                    content += f"{material_content}\n\n"
+            
+            return content
+        except Exception as e:
+            logging.error(f"Error formatting day content: {e}")
+            return None
     
     def start_quiz(self, chat_id, user_id, day_num):
         """Start a quiz for a specific day"""
