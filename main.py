@@ -239,47 +239,47 @@ class Database:
         conn.commit()
         conn.close()
 
-def can_access_day(user_id, day_num):
-    """Check if user can access this day based on completion of previous days"""
-    progress = db.get_user_progress(user_id)
-    if not progress:
-        return day_num == 1  # Only allow day 1 for new users
+    def can_access_day(user_id, day_num):
+        """Check if user can access this day based on completion of previous days"""
+        progress = db.get_user_progress(user_id)
+        if not progress:
+            return day_num == 1  # Only allow day 1 for new users
+        
+        completed_days = progress.get("completed_days", set())
+        current_day = progress.get("current_day", 1)
+        
+        # Allow access to:
+        # 1. Already completed days (for review)
+        # 2. Current day in progression
+        # 3. Next day only if current day is completed
+        if day_num in completed_days:
+            return True
+        elif day_num == current_day:
+            return True
+        elif day_num == current_day + 1 and current_day in completed_days:
+            return True
+        else:
+            return False
     
-    completed_days = progress.get("completed_days", set())
-    current_day = progress.get("current_day", 1)
-    
-    # Allow access to:
-    # 1. Already completed days (for review)
-    # 2. Current day in progression
-    # 3. Next day only if current day is completed
-    if day_num in completed_days:
-        return True
-    elif day_num == current_day:
-        return True
-    elif day_num == current_day + 1 and current_day in completed_days:
-        return True
-    else:
-        return False
-
-def can_take_quiz(user_id, day_num):
-    """Check if user can take quiz for this day"""
-    progress = db.get_user_progress(user_id)
-    if not progress:
-        return False
-    
-    # Only allow quiz for current day or completed days
-    current_day = progress.get("current_day", 1)
-    completed_days = progress.get("completed_days", set())
-    
-    return day_num == current_day or day_num in completed_days
-      
+    def can_take_quiz(user_id, day_num):
+        """Check if user can take quiz for this day"""
+        progress = db.get_user_progress(user_id)
+        if not progress:
+            return False
+        
+        # Only allow quiz for current day or completed days
+        current_day = progress.get("current_day", 1)
+        completed_days = progress.get("completed_days", set())
+        
+        return day_num == current_day or day_num in completed_days
+          
     def get_quiz_state(self, user_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+            
         cursor.execute('SELECT * FROM quiz_state WHERE user_id = ?', (user_id,))
         result = cursor.fetchone()
-        
+            
         if result:
             quiz_state = {
                 'day': result[1],
@@ -290,14 +290,14 @@ def can_take_quiz(user_id, day_num):
             }
         else:
             quiz_state = None
-        
+            
         conn.close()
         return quiz_state
-    
+        
     def save_quiz_state(self, user_id, quiz_state):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+            
         cursor.execute('''
             INSERT OR REPLACE INTO quiz_state 
             (user_id, day, current_question, score, total_questions, quiz_data)
@@ -310,30 +310,30 @@ def can_take_quiz(user_id, day_num):
             quiz_state.get('total_questions'),
             json.dumps(quiz_state.get('quiz_data', {}))
         ))
-        
+            
         conn.commit()
         conn.close()
-    
+        
     def delete_quiz_state(self, user_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+            
         cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
         conn.commit()
         conn.close()
-        
+            
     def get_all_users_with_preferences(self, preference_type):
         """Get all users who have specific reminder preferences enabled"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+            
         if preference_type == "breathing_reminders":
             cursor.execute('SELECT user_id FROM user_preferences WHERE breathing_reminders = 1')
         elif preference_type == "daily_reminders":
             cursor.execute('SELECT user_id FROM user_preferences WHERE daily_reminders = 1')
         else:
             cursor.execute('SELECT user_id FROM user_preferences')
-        
+            
         results = cursor.fetchall()
         user_ids = [result[0] for result in results]
         conn.close()
@@ -2465,45 +2465,7 @@ def complete_exercise(user_id, day_num, exercise_type):
 #     tasks.append([{"text": "🏠 القائمة الرئيسية" if language == 'ar' else "🏠 Main Menu", "callback_data": "main_menu"}])
 #     
 #     return {"inline_keyboard": tasks}
-
-# NEW SIMPLIFIED TASK COMPLETION SYSTEM
-def create_simple_day_completion(user_id, day_num, language):
-    """Create simple completion button for the entire day"""
-    progress = db.get_user_progress(user_id)
-    if not progress:
-        progress = {"completed_days": []}
-    
-    # Check if day is already completed
-    completed_days = progress.get("completed_days", [])
-    is_day_completed = day_num in completed_days
-    
-    if language == 'ar':
-        if is_day_completed:
-            complete_button = {"text": "✅ اليوم مكتمل", "callback_data": "already_completed"}
-        else:
-            complete_button = {"text": "🎯 إكمال اليوم", "callback_data": f"complete_day_{day_num}"}
-        
-        quiz_button = {"text": "❓ اختبار اليوم", "callback_data": f"start_quiz_{day_num}"}
-        menu_button = {"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}
-    else:
-        if is_day_completed:
-            complete_button = {"text": "✅ Day Completed", "callback_data": "already_completed"}
-        else:
-            complete_button = {"text": "🎯 Complete Day", "callback_data": f"complete_day_{day_num}"}
-        
-        quiz_button = {"text": "❓ Day Quiz", "callback_data": f"start_quiz_{day_num}"}
-        menu_button = {"text": "🏠 Main Menu", "callback_data": "main_menu"}
-    
-    keyboard = {
-        "inline_keyboard": [
-            [complete_button],
-            [quiz_button],
-            [menu_button]
-        ]
-    }
-    
-    return keyboard
-    
+  
 def mark_task_completed(user_id, day_num, task_num, task_type):
     """Mark any type of task as completed"""
     progress = db.get_user_progress(user_id)
@@ -3109,11 +3071,11 @@ Choose from the menu below to start your journey! 🚀"""
             )
             self.bot.send_message(chat_id, help_text)
     
-    def handle_callback(self, chat_id, user_id, data):
-        """Handle callback queries"""
+    def handle_callback(self, chat_id, user_id, data, callback_query_id=None):
         logging.info(f"📱 Callback received: {data} from user {user_id}")
-         # Answer callback query first
-        self.bot.answer_callback_query(callback_query_id)
+        # Answer callback query first if ID is provided
+        if callback_query_id:
+            self.bot.answer_callback_query(callback_query_id)
         try:
             if data == "main_menu":
                 menu_text = self.get_text(user_id,
@@ -3678,12 +3640,13 @@ def webhook():
                 chat_id = callback_query['message']['chat']['id']
                 user_id = callback_query['from']['id']
                 data = callback_query['data']
+                callback_query_id = callback_query['id']  # ← ADD THIS
                 
                 # Answer callback query first
-                bot.answer_callback_query(callback_query['id'])
+                bot.answer_callback_query(callback_query_id)
                 
-                # Handle the callback
-                message_handler.handle_callback(chat_id, user_id, data)
+                # Handle the callback with the ID
+                message_handler.handle_callback(chat_id, user_id, data, callback_query_id)
         
         except Exception as e:
             logging.error(f"Error processing webhook: {e}")
