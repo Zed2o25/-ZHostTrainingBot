@@ -3416,8 +3416,8 @@ Choose from the menu below to start your journey! 🚀"""
         
         # Check for achievements
     new_achievements = check_and_unlock_achievements(user_id)
-        if new_achievements:
-            send_achievement_notification(self.bot, user_id, new_achievements)
+    if new_achievements:
+        send_achievement_notification(self.bot, user_id, new_achievements)
         
         # Clean up quiz state
         db.delete_quiz_state(user_id)
