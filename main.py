@@ -3348,16 +3348,16 @@ Choose from the menu below to start your journey! 🚀"""
         content = self.format_day_content_with_completion(day_data, user_id, day_num)
         self.bot.send_message(chat_id, content)
                 
-# Send simple completion keyboard
-language = self.get_user_language(user_id)
-completion_keyboard = create_simple_day_completion(user_id, day_num, language)
-
-if language == 'ar':
-    progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
-else:
-    progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
-
-self.bot.send_message(chat_id, progress_text, completion_keyboard)
+        # Send simple completion keyboard
+        language = self.get_user_language(user_id)
+        completion_keyboard = create_simple_day_completion(user_id, day_num, language)
+        
+        if language == 'ar':
+            progress_text = f"📊 **اليوم {day_num}**\n\nاستخدم الأزرار أدناه لإكمال اليوم أو اختباره:"
+        else:
+            progress_text = f"📊 **Day {day_num}**\n\nUse the buttons below to complete the day or take the quiz:"
+        
+        self.bot.send_message(chat_id, progress_text, completion_keyboard)
     
     def format_day_content(self, day_data, user_id, day_num):
         """Format complete day content with all materials and exercise tracking"""
