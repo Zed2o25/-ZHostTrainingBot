@@ -93,6 +93,26 @@ class Database:
         
         conn.commit()
         conn.close()
+
+        def save_user_preferences(self, user_id, preferences):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO user_preferences 
+            (user_id, language, breathing_reminders, daily_reminders, quiz_reminders, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            preferences.get("language", "ar"),
+            int(preferences.get("breathing_reminders", True)),
+            int(preferences.get("daily_reminders", True)),
+            int(preferences.get("quiz_reminders", True)),
+            datetime.now().isoformat()
+        ))
+        
+        conn.commit()
+        conn.close()
     
     def get_user_progress(self, user_id):
         conn = sqlite3.connect(self.db_path)
@@ -3160,45 +3180,34 @@ Choose from the menu below to start your journey! 🚀"""
             progress_text = f"📊 **Day {day_num} Progress:** {completed_count}/{total_tasks} completed\n\nSelect tasks to complete:"
         
         self.bot.send_message(chat_id, progress_text, task_keyboard)
-def format_day_content_with_completion(self, day_data, user_id, day_num):
-    """Format day content showing completion status for all tasks"""
-    language = self.get_user_language(user_id)
-    title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
-    
-    progress = db.get_user_progress(user_id)
-    completed_tasks = progress.get("completed_exercises", {}).get(day_num, set()) if progress else set()
-    
-    content = f"**{title}**\n\n"
-    
-    for i, material in enumerate(day_data['materials'], 1):
-        material_title = material['title_ar'] if language == 'ar' else material['title_en']
-        material_content = material['content_ar'] if language == 'ar' else material['content_en']
+
+    def format_day_content_with_completion(self, day_data, user_id, day_num):
+        language = self.get_user_language(user_id)
+        title = day_data['title_ar'] if language == 'ar' else day_data['title_en']
         
-        # Determine task type for completion check
-        task_type = "reading"
-        if "تمرين" in material_title or "exercise" in material_title.lower():
-            if "تنفس" in material_title or "breathing" in material_title.lower():
-                task_type = "breathing"
-            elif "قصة" in material_title or "story" in material_title.lower():
-                task_type = "storytelling" 
-            elif "تسجيل" in material_title or "recording" in material_title.lower():
-                task_type = "recording"
-            else:
+        progress = db.get_user_progress(user_id)
+        completed_tasks = progress.get("completed_exercises", {}).get(day_num, set()) if progress else set()
+        
+        content = f"**{title}**\n\n"
+        
+        for i, material in enumerate(day_data['materials'], 1):
+            material_title = material['title_ar'] if language == 'ar' else material['title_en']
+            material_content = material['content_ar'] if language == 'ar' else material['content_en']
+            
+            task_type = "reading"
+            if "تمرين" in material_title or "exercise" in material_title.lower():
                 task_type = "vocal"
-        elif "مهمة" in material_title or "task" in material_title.lower():
-            task_type = "daily_task"
-        elif "نشاط" in material_title or "activity" in material_title.lower():
-            task_type = "group_activity"
+            elif "مهمة" in material_title or "task" in material_title.lower():
+                task_type = "daily_task"
+            
+            task_key = f"{task_type}_{day_num}_{i}"
+            is_completed = task_key in completed_tasks
+            
+            status_emoji = "✅" if is_completed else "📝"
+            content += f"{status_emoji} **{i}. {material_title}**\n"
+            content += f"{material_content}\n\n"
         
-        task_key = f"{task_type}_{day_num}_{i}"
-        is_completed = task_key in completed_tasks
-        
-        # Add completion status emoji
-        status_emoji = "✅" if is_completed else "📝"
-        content += f"{status_emoji} **{i}. {material_title}**\n"
-        content += f"{material_content}\n\n"
-    
-    return content
+        return content
     
     def format_day_content(self, day_data, user_id, day_num):
         """Format complete day content with all materials and exercise tracking"""
