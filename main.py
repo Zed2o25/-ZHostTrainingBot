@@ -216,7 +216,28 @@ class Database:
         
         conn.commit()
         conn.close() 
-
+    def get_user_achievements(self, user_id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT achievement_id FROM user_achievements WHERE user_id = ?', (user_id,))
+        results = cursor.fetchall()
+        
+        achievements = [result[0] for result in results]
+        conn.close()
+        return achievements
+    
+    def save_user_achievement(self, user_id, achievement_id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR IGNORE INTO user_achievements (user_id, achievement_id)
+            VALUES (?, ?)
+        ''', (user_id, achievement_id))
+        
+        conn.commit()
+        conn.close()
 
 def can_access_day(user_id, day_num):
     """Check if user can access this day based on completion of previous days"""
@@ -300,30 +321,7 @@ def can_take_quiz(user_id, day_num):
         cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
         conn.commit()
         conn.close()
-    
-    def get_user_achievements(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
         
-        cursor.execute('SELECT achievement_id FROM user_achievements WHERE user_id = ?', (user_id,))
-        results = cursor.fetchall()
-        
-        achievements = [result[0] for result in results]
-        conn.close()
-        return achievements
-    
-    def save_user_achievement(self, user_id, achievement_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT OR IGNORE INTO user_achievements (user_id, achievement_id)
-            VALUES (?, ?)
-        ''', (user_id, achievement_id))
-        
-        conn.commit()
-        conn.close()
-    
     def get_all_users_with_preferences(self, preference_type):
         """Get all users who have specific reminder preferences enabled"""
         conn = sqlite3.connect(self.db_path)
