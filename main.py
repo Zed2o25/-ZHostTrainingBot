@@ -3126,44 +3126,53 @@ Choose from the menu below to start your journey! 🚀"""
                 self.handle_quiz_answer(chat_id, user_id, answer_index)
     
             elif data.startswith("complete_day_"):
-                day_num = int(data.split("_")[2])
-                
-                # Mark day as completed
-                progress = db.get_user_progress(user_id)
-                if not progress:
-                    initialize_user_progress(user_id)
+                try:
+                    day_num = int(data.split("_")[2])
+                    
+                    # Mark day as completed
                     progress = db.get_user_progress(user_id)
-                
-                # Initialize completed days if not exists
-                if "completed_days" not in progress:
-                    progress["completed_days"] = []
-                
-                # Add day to completed days if not already there
-                if day_num not in progress["completed_days"]:
-                    progress["completed_days"].append(day_num)
-                
-                # Update current day to next day if this is the current day
-                current_day = progress.get("current_day", 1)
-                if day_num == current_day:
-                    progress["current_day"] = min(15, current_day + 1)
-                
-                db.save_user_progress(user_id, progress)
-                
-                # Send confirmation
-                language = self.get_user_language(user_id)
-                if language == 'ar':
-                    confirm_text = f"✅ **تم إكمال اليوم {day_num}!**\n\nيمكنك الآن الانتقال إلى اليوم التالي أو اختبار اليوم."
+                    if not progress:
+                        initialize_user_progress(user_id)
+                        progress = db.get_user_progress(user_id)
+                    
+                    # Initialize completed days if not exists - FIX: Handle both set and list
+                    if "completed_days" not in progress:
+                        progress["completed_days"] = set()
+                    
+                    # Convert to set if it's a list (for backward compatibility)
+                    if isinstance(progress["completed_days"], list):
+                        progress["completed_days"] = set(progress["completed_days"])
+                    
+                    # Add day to completed days if not already there - FIX: Use set method
+                    progress["completed_days"].add(day_num)
+                    
+                    # Update current day to next day if this is the current day
+                    current_day = progress.get("current_day", 1)
                     if day_num == current_day:
-                        confirm_text += f"\n\n🔓 اليوم {progress['current_day']} متاح الآن!"
-                else:
-                    confirm_text = f"✅ **Day {day_num} Completed!**\n\nYou can now proceed to the next day or take the day's quiz."
-                    if day_num == current_day:
-                        confirm_text += f"\n\n🔓 Day {progress['current_day']} is now available!"
-                
-                self.bot.send_message(chat_id, confirm_text)
-                
-                # Refresh the day view to show updated status
-                self.send_day_content(chat_id, user_id, day_num)
+                        progress["current_day"] = min(15, current_day + 1)
+                    
+                    db.save_user_progress(user_id, progress)
+                    
+                    # Send confirmation
+                    language = self.get_user_language(user_id)
+                    if language == 'ar':
+                        confirm_text = f"✅ **تم إكمال اليوم {day_num}!**\n\nيمكنك الآن الانتقال إلى اليوم التالي أو اختبار اليوم."
+                        if day_num == current_day:
+                            confirm_text += f"\n\n🔓 اليوم {progress['current_day']} متاح الآن!"
+                    else:
+                        confirm_text = f"✅ **Day {day_num} Completed!**\n\nYou can now proceed to the next day or take the day's quiz."
+                        if day_num == current_day:
+                            confirm_text += f"\n\n🔓 Day {progress['current_day']} is now available!"
+                    
+                    self.bot.send_message(chat_id, confirm_text)
+                    
+                    # Refresh the day view to show updated status
+                    self.send_day_content(chat_id, user_id, day_num)
+                        
+                except Exception as e:
+                    logging.error(f"Error in complete_day handler: {e}", exc_info=True)
+                    error_text = self.get_text(user_id, "❌ حدث خطأ في إكمال اليوم", "❌ Error completing day")
+                    self.bot.send_message(chat_id, error_text)
                 
                 # Check for achievements
                 # new_achievements = check_and_unlock_achievements(user_id)
