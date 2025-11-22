@@ -3283,7 +3283,11 @@ Choose from the menu below to start your journey! 🚀"""
                 
                 # Start the quiz
                 self.start_quiz(chat_id, user_id, day_num)
-    
+        except Exception as e:
+            logging.error(f"Error handling callback: {e}")
+            error_text = self.get_text(user_id, "❌ حدث خطأ", "❌ An error occurred")
+            self.bot.send_message(chat_id, error_text)
+        
     def send_day_content(self, chat_id, user_id, day_num):
         """Send complete day content to user with simple completion system"""
         logging.info(f"📖 Sending day {day_num} content for user {user_id}")
