@@ -3166,9 +3166,9 @@ Choose from the menu below to start your journey! 🚀"""
                 self.send_day_content(chat_id, user_id, day_num)
                 
                 # Check for achievements
-                new_achievements = check_and_unlock_achievements(user_id)
-                if new_achievements:
-                    send_achievement_notification(self.bot, user_id, new_achievements)
+                # new_achievements = check_and_unlock_achievements(user_id)
+                # if new_achievements:
+                #   send_achievement_notification(self.bot, user_id, new_achievements)
                             
             elif data.startswith("complete_task_"):
                 parts = data.split("_")
