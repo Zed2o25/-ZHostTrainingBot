@@ -2260,7 +2260,7 @@ def initialize_user_progress(user_id):
     """Initialize user progress in database"""
     progress = {
         "current_day": 1,
-        "completed_days": [],
+        "completed_days": [],  # ← CHANGED TO LIST
         "quiz_scores": {},
         "last_activity": datetime.now().isoformat(),
         "streak_count": 0,
@@ -2268,9 +2268,9 @@ def initialize_user_progress(user_id):
         "completed_voice_exercises": 0,
         "breathing_sessions_completed": 0,
         "storytelling_exercises": 0,
-        "completed_exercises": {},
+        "completed_exercises": {},  # ← KEEP AS DICT
         "total_study_time": 0,
-        "achievements_unlocked": [],
+        "achievements_unlocked": [],  # ← CHANGED TO LIST
         "daily_tasks_completed": 0,
         "recording_sessions": 0
     }
@@ -2363,12 +2363,12 @@ def complete_exercise(user_id, day_num, exercise_type):
         progress["completed_exercises"] = {}
     
     if day_num not in progress["completed_exercises"]:
-        progress["completed_exercises"][day_num] = []
+        progress["completed_exercises"][day_num] = []  # ← CHANGE TO LIST
     
     # Mark exercise as completed
     exercise_key = f"{exercise_type}_{day_num}"
     if exercise_key not in progress["completed_exercises"][day_num]:
-        progress["completed_exercises"][day_num].append(exercise_key)
+        progress["completed_exercises"][day_num].append(exercise_key)  # ← USE append()
     
     # Update specific counters based on exercise type
     if "vocal" in exercise_type or "recording" in exercise_type:
@@ -2456,12 +2456,12 @@ def mark_task_completed(user_id, day_num, task_num, task_type):
         progress["completed_exercises"] = {}
     
     if day_num not in progress["completed_exercises"]:
-        progress["completed_exercises"][day_num] = []
+        progress["completed_exercises"][day_num] = []  # ← CHANGE TO LIST
     
     # Mark task as completed
     task_key = f"{task_type}_{day_num}_{task_num}"
     if task_key not in progress["completed_exercises"][day_num]:
-        progress["completed_exercises"][day_num].append(task_key)
+        progress["completed_exercises"][day_num].append(task_key)  # ← USE append()
     
     # Update specific counters based on task type
     if task_type == "vocal" or task_type == "recording":
