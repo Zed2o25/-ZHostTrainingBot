@@ -2260,7 +2260,7 @@ def initialize_user_progress(user_id):
     """Initialize user progress in database"""
     progress = {
         "current_day": 1,
-        "completed_days": set(),
+        "completed_days": [],
         "quiz_scores": {},
         "last_activity": datetime.now().isoformat(),
         "streak_count": 0,
@@ -3409,7 +3409,7 @@ Choose from the menu below to start your journey! 🚀"""
             completed_days_list = list(progress.get('completed_days', set()))
             if current_day not in completed_days_list:
                 completed_days_list.append(current_day)
-            progress['completed_days'] = set(completed_days_list) 
+            progress['completed_days'] = completed_days_list 
             progress['current_day'] = min(15, current_day + 1)
         
         db.save_user_progress(user_id, progress)
