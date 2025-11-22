@@ -3000,7 +3000,12 @@ def create_exercise_keyboard(day_num, exercise_num, exercise_type, language):
 class MessageHandler:
     def __init__(self, bot):
         self.bot = bot
-    
+        # Import the helper functions
+        from __main__ import can_access_day, update_streak, create_simple_day_completion
+        self.can_access_day = can_access_day
+        self.update_streak = update_streak
+        self.create_simple_day_completion = create_simple_day_completion
+        
     def get_user_language(self, user_id):
         preferences = db.get_user_preferences(user_id)
         return preferences.get("language", "ar") if preferences else "ar"
@@ -3293,7 +3298,7 @@ Choose from the menu below to start your journey! 🚀"""
         logging.info(f"📖 Sending day {day_num} content for user {user_id}")
         
         # Check sequential progression
-        if not can_access_day(user_id, day_num):
+        if not self.can_access_day(user_id, day_num):
             language = self.get_user_language(user_id)
             progress = db.get_user_progress(user_id)
             current_day = progress.get("current_day", 1) if progress else 1
@@ -3313,7 +3318,7 @@ Choose from the menu below to start your journey! 🚀"""
             return
         
         # Update streak
-        update_streak(user_id)
+        self.update_streak(user_id)
         
         # Send day content
         content = self.format_day_content(day_data, user_id, day_num)
