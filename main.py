@@ -3347,7 +3347,7 @@ Choose from the menu below to start your journey! 🚀"""
         
         # Send next question or finish quiz
         self.send_quiz_question(chat_id, user_id)
-    
+    '''
     def finish_quiz(self, chat_id, user_id):
         """Finish the quiz and show results"""
         quiz_state = db.get_quiz_state(user_id)
@@ -3413,7 +3413,7 @@ Choose from the menu below to start your journey! 🚀"""
             progress['current_day'] = min(15, current_day + 1)
     
     db.save_user_progress(user_id, progress)
-        
+     '''   
         # Check for achievements
     new_achievements = check_and_unlock_achievements(user_id)
     if new_achievements:
