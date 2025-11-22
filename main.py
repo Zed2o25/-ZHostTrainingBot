@@ -3415,7 +3415,7 @@ Choose from the menu below to start your journey! 🚀"""
     db.save_user_progress(user_id, progress)
         
         # Check for achievements
-        new_achievements = check_and_unlock_achievements(user_id)
+    new_achievements = check_and_unlock_achievements(user_id)
         if new_achievements:
             send_achievement_notification(self.bot, user_id, new_achievements)
         
