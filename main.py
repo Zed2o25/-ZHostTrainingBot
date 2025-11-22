@@ -122,9 +122,13 @@ class Database:
         result = cursor.fetchone()
         
         if result:
+            # Convert completed_days from list (JSON) back to set
+            completed_days_json = result[2]
+            completed_days = set(json.loads(completed_days_json)) if completed_days_json else set()
+            
             progress = {
                 "current_day": result[1],
-                "completed_days": set(json.loads(result[2])),
+                "completed_days": completed_days,  # Now it's a set
                 "quiz_scores": json.loads(result[3]),
                 "last_activity": result[4],
                 "streak_count": result[5],
@@ -147,6 +151,11 @@ class Database:
     def save_user_progress(self, user_id, progress):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+
+        # Convert set to list for JSON serialization
+        completed_days = progress.get("completed_days", set())
+        if isinstance(completed_days, set):
+            completed_days = list(completed_days)
         
         cursor.execute('''
             INSERT OR REPLACE INTO user_progress 
@@ -158,7 +167,7 @@ class Database:
         ''', (
             user_id,
             progress.get("current_day", 1),
-            json.dumps(list(progress.get("completed_days", set()))),
+            json.dumps("completed_days"),    # Now it's a list for JSON
             json.dumps(progress.get("quiz_scores", {})),
             progress.get("last_activity", datetime.now().isoformat()),
             progress.get("streak_count", 0),
@@ -2264,7 +2273,7 @@ def initialize_user_progress(user_id):
     """Initialize user progress in database"""
     progress = {
         "current_day": 1,
-        "completed_days": [],  # ← CHANGED TO LIST
+        "completed_days": set(),  # ← CHANGED TO LIST
         "quiz_scores": {},
         "last_activity": datetime.now().isoformat(),
         "streak_count": 0,
@@ -3127,31 +3136,49 @@ Choose from the menu below to start your journey! 🚀"""
     
             elif data.startswith("complete_day_"):
                 try:
+                    logging.info(f"🎯 Starting complete_day process for user {user_id}")
                     day_num = int(data.split("_")[2])
+                    logging.info(f"📅 Completing day {day_num} for user {user_id}")
                     
                     # Mark day as completed
                     progress = db.get_user_progress(user_id)
+                    logging.info(f"📊 User progress: {progress}")
+                    
                     if not progress:
+                        logging.info("🆕 Initializing user progress")
                         initialize_user_progress(user_id)
                         progress = db.get_user_progress(user_id)
+                        logging.info(f"📊 New user progress: {progress}")
                     
-                    # Initialize completed days if not exists - FIX: Handle both set and list
+                    # Initialize completed days if not exists
                     if "completed_days" not in progress:
+                        logging.info("🆕 Initializing completed_days as set")
                         progress["completed_days"] = set()
+                    else:
+                        logging.info(f"📋 Current completed_days type: {type(progress['completed_days'])}, value: {progress['completed_days']}")
                     
                     # Convert to set if it's a list (for backward compatibility)
                     if isinstance(progress["completed_days"], list):
+                        logging.info("🔄 Converting completed_days from list to set")
                         progress["completed_days"] = set(progress["completed_days"])
                     
-                    # Add day to completed days if not already there - FIX: Use set method
+                    # Add day to completed days if not already there
+                    logging.info(f"➕ Adding day {day_num} to completed_days")
                     progress["completed_days"].add(day_num)
+                    logging.info(f"📋 Updated completed_days: {progress['completed_days']}")
                     
                     # Update current day to next day if this is the current day
                     current_day = progress.get("current_day", 1)
-                    if day_num == current_day:
-                        progress["current_day"] = min(15, current_day + 1)
+                    logging.info(f"📅 Current day: {current_day}")
                     
+                    if day_num == current_day:
+                        new_day = min(15, current_day + 1)
+                        logging.info(f"🆙 Updating current day from {current_day} to {new_day}")
+                        progress["current_day"] = new_day
+                    
+                    logging.info("💾 Saving user progress to database")
                     db.save_user_progress(user_id, progress)
+                    logging.info("✅ Progress saved successfully")
                     
                     # Send confirmation
                     language = self.get_user_language(user_id)
@@ -3164,15 +3191,29 @@ Choose from the menu below to start your journey! 🚀"""
                         if day_num == current_day:
                             confirm_text += f"\n\n🔓 Day {progress['current_day']} is now available!"
                     
+                    logging.info("📤 Sending confirmation message")
                     self.bot.send_message(chat_id, confirm_text)
-                    
-                    # Refresh the day view to show updated status
-                    self.send_day_content(chat_id, user_id, day_num)
-                        
-                except Exception as e:
-                    logging.error(f"Error in complete_day handler: {e}", exc_info=True)
-                    error_text = self.get_text(user_id, "❌ حدث خطأ في إكمال اليوم", "❌ Error completing day")
-                    self.bot.send_message(chat_id, error_text)
+        
+        # Refresh the day view to show updated status
+        logging.info("🔄 Refreshing day content view")
+        self.send_day_content(chat_id, user_id, day_num)
+        logging.info("✅ Complete_day process finished successfully")
+            
+    except Exception as e:
+        logging.error(f"❌ Error in complete_day handler: {e}", exc_info=True)
+        # Log additional debug info
+        logging.error(f"🔍 Debug info - user_id: {user_id}, day_num: {day_num}")
+        try:
+            progress = db.get_user_progress(user_id)
+            logging.error(f"🔍 Progress object: {progress}")
+            if progress:
+                logging.error(f"🔍 completed_days type: {type(progress.get('completed_days'))}")
+                logging.error(f"🔍 completed_days value: {progress.get('completed_days')}")
+        except Exception as debug_error:
+            logging.error(f"🔍 Debug error: {debug_error}")
+        
+        error_text = self.get_text(user_id, "❌ حدث خطأ في إكمال اليوم", "❌ Error completing day")
+        self.bot.send_message(chat_id, error_text)
                 
                 # Check for achievements
                 # new_achievements = check_and_unlock_achievements(user_id)
