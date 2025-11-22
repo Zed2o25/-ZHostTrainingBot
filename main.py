@@ -2421,24 +2421,45 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
         is_completed = task_key in completed_tasks
         
         if language == 'ar':
-            status = "✅ مكتمل" if is_completed else "📝 انقر للإكمال"
-            button_text = f"{status} - {material_title}"
+            if is_completed:
+                status = "✅ مكتمل"
+                button_text = f"{status} - {material_title}"
+                callback_data = "already_completed"
+            else:
+                status = "📝 انقر للإكمال"
+                button_text = f"{status} - {material_title}"
+                callback_data = f"complete_task_{day_num}_{i}_{task_type}"
         else:
-            status = "✅ Completed" if is_completed else "📝 Click to complete" 
-            button_text = f"{status} - {material_title}"
+            if is_completed:
+                status = "✅ Completed"
+                button_text = f"{status} - {material_title}"
+                callback_data = "already_completed"
+            else:
+                status = "📝 Click to complete"
+                button_text = f"{status} - {material_title}"
+                callback_data = f"complete_task_{day_num}_{i}_{task_type}"
         
-        callback_data = f"complete_task_{day_num}_{i}_{task_type}"
         tasks.append([{"text": button_text, "callback_data": callback_data}])
     
     # Add quiz completion
     quiz_key = f"quiz_{day_num}"
     quiz_completed = quiz_key in completed_tasks
     if language == 'ar':
-        quiz_text = "✅ اختبار مكتمل" if quiz_completed else "❓ إكمال الاختبار"
+        if quiz_completed:
+            quiz_text = "✅ اختبار مكتمل"
+            quiz_callback = "already_completed"
+        else:
+            quiz_text = "❓ إكمال الاختبار"
+            quiz_callback = f"complete_quiz_{day_num}"
     else:
-        quiz_text = "✅ Quiz Completed" if quiz_completed else "❓ Complete Quiz"
+        if quiz_completed:
+            quiz_text = "✅ Quiz Completed"
+            quiz_callback = "already_completed"
+        else:
+            quiz_text = "❓ Complete Quiz"
+            quiz_callback = f"complete_quiz_{day_num}"
     
-    tasks.append([{"text": quiz_text, "callback_data": f"complete_quiz_{day_num}"}])
+    tasks.append([{"text": quiz_text, "callback_data": quiz_callback}])
     
     tasks.append([{"text": "🏠 القائمة الرئيسية" if language == 'ar' else "🏠 Main Menu", "callback_data": "main_menu"}])
     
@@ -2495,7 +2516,7 @@ def get_day_completion_stats(user_id, day_num):
     # Count total tasks (materials + quiz)
     total_tasks = len(day_data.get('materials', [])) + 1  # +1 for quiz
     
-    # Count completed tasks
+    # Count completed tasks (works for both list and set)
     completed_count = len(completed_tasks)
     
     return completed_count, total_tasks
@@ -2587,13 +2608,13 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
             task_type = "group_activity"
         
         task_key = f"{task_type}_{day_num}_{i}"
-        is_completed = task_key in completed_tasks  # This works with lists too
+        is_completed = task_key in completed_tasks
         
         if language == 'ar':
             if is_completed:
                 status = "✅ مكتمل"
                 button_text = f"{status} - {material_title}"
-                callback_data = "already_completed"  # No action if already completed
+                callback_data = "already_completed"
             else:
                 status = "📝 انقر للإكمال"
                 button_text = f"{status} - {material_title}"
@@ -2602,7 +2623,7 @@ def create_comprehensive_task_tracking(day_data, user_id, day_num, language):
             if is_completed:
                 status = "✅ Completed"
                 button_text = f"{status} - {material_title}"
-                callback_data = "already_completed"  # No action if already completed
+                callback_data = "already_completed"
             else:
                 status = "📝 Click to complete"
                 button_text = f"{status} - {material_title}"
@@ -2646,11 +2667,12 @@ def mark_task_completed(user_id, day_num, task_num, task_type):
         progress["completed_exercises"] = {}
     
     if day_num not in progress["completed_exercises"]:
-        progress["completed_exercises"][day_num] = set()
+        progress["completed_exercises"][day_num] = []  # Initialize as list
     
     # Mark task as completed
     task_key = f"{task_type}_{day_num}_{task_num}"
-    progress["completed_exercises"][day_num].add(task_key)
+    if task_key not in progress["completed_exercises"][day_num]:
+        progress["completed_exercises"][day_num].append(task_key)  # Use append for list
     
     # Update specific counters based on task type
     if task_type == "vocal" or task_type == "recording":
@@ -2684,7 +2706,7 @@ def get_day_completion_stats(user_id, day_num):
     # Count total tasks (materials + quiz)
     total_tasks = len(day_data.get('materials', [])) + 1  # +1 for quiz
     
-    # Count completed tasks
+    # Count completed tasks (works for both list and set)
     completed_count = len(completed_tasks)
     
     return completed_count, total_tasks
@@ -3012,6 +3034,7 @@ Choose from the menu below to start your journey! 🚀"""
     
     def handle_callback(self, chat_id, user_id, data):
         """Handle callback queries"""
+        logging.info(f"📱 Callback received: {data} from user {user_id}")
         if data == "main_menu":
             menu_text = self.get_text(user_id,
                 "🏫 **القائمة الرئيسية**\n\nاختر مسار التعلم:",
