@@ -3244,6 +3244,15 @@ elif data.startswith("complete_quiz_"):
             progress = db.get_user_progress(user_id)
         
         progress['quiz_scores'][quiz_state['day']] = score
+
+        # Mark quiz as completed in tasks
+        if "completed_exercises" not in progress:
+            progress["completed_exercises"] = {}
+        if quiz_state['day'] not in progress["completed_exercises"]:
+            progress["completed_exercises"][quiz_state['day']] = set()
+
+        quiz_task_key = f"quiz_{quiz_state['day']}"
+        progress["completed_exercises"][quiz_state['day']].add(quiz_task_key)
         
         # Mark day as completed if this is the current day
         current_day = progress.get('current_day', 1)
