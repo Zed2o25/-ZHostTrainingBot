@@ -2363,11 +2363,12 @@ def complete_exercise(user_id, day_num, exercise_type):
         progress["completed_exercises"] = {}
     
     if day_num not in progress["completed_exercises"]:
-        progress["completed_exercises"][day_num] = set()
+        progress["completed_exercises"][day_num] = []
     
     # Mark exercise as completed
     exercise_key = f"{exercise_type}_{day_num}"
-    progress["completed_exercises"][day_num].add(exercise_key)
+    if exercise_key not in progress["completed_exercises"][day_num]:
+        progress["completed_exercises"][day_num].append(exercise_key)
     
     # Update specific counters based on exercise type
     if "vocal" in exercise_type or "recording" in exercise_type:
@@ -2455,11 +2456,12 @@ def mark_task_completed(user_id, day_num, task_num, task_type):
         progress["completed_exercises"] = {}
     
     if day_num not in progress["completed_exercises"]:
-        progress["completed_exercises"][day_num] = set()
+        progress["completed_exercises"][day_num] = []
     
     # Mark task as completed
     task_key = f"{task_type}_{day_num}_{task_num}"
-    progress["completed_exercises"][day_num].add(task_key)
+    if task_key not in progress["completed_exercises"][day_num]:
+        progress["completed_exercises"][day_num].append(task_key)
     
     # Update specific counters based on task type
     if task_type == "vocal" or task_type == "recording":
@@ -3395,18 +3397,22 @@ Choose from the menu below to start your journey! 🚀"""
         if "completed_exercises" not in progress:
             progress["completed_exercises"] = {}
         if quiz_state['day'] not in progress["completed_exercises"]:
-            progress["completed_exercises"][quiz_state['day']] = set()
+            progress["completed_exercises"][quiz_state['day']] =[]
 
         quiz_task_key = f"quiz_{quiz_state['day']}"
-        progress["completed_exercises"][quiz_state['day']].add(quiz_task_key)
+        if quiz_task_key not in progress["completed_exercises"][quiz_state['day']]:
+            progress["completed_exercises"][quiz_state['day']].append(quiz_task_key)
         
         # Mark day as completed if this is the current day
         current_day = progress.get('current_day', 1)
         if quiz_state['day'] == current_day:
-            progress['completed_days'].add(current_day)
+            completed_days_list = list(progress.get('completed_days', set()))
+            if current_day not in completed_days_list:
+                completed_days_list.append(current_day)
+            progress['completed_days'] = set(completed_days_list) 
             progress['current_day'] = min(15, current_day + 1)
-        
-        db.save_user_progress(user_id, progress)
+    
+    db.save_user_progress(user_id, progress)
         
         # Check for achievements
         new_achievements = check_and_unlock_achievements(user_id)
