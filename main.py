@@ -14,7 +14,7 @@ logging.basicConfig(
 app = Flask(__name__)
 
 # =============================================================================
-# COMPLETE 15-DAY TRAINING DATA - EXACT CONTENT AS PROVIDED
+# COMPLETE 15-DAY TRAINING DATA - UPDATED CONTENT
 # =============================================================================
 
 TRAINING_DATA = {
@@ -39,8 +39,8 @@ TRAINING_DATA = {
 
 كيف تستمع بنشاط؟
 لا تنتظر دورك للكلام: ركز على ما يقال الآن وليس على ردك القادم
-الرد على المشاعر: انتبه لنبرة صوت المتحدث ("أشعر أنك متحمس لهذه الفكرة!")
-الأسئلة التوضيحية: ("هل تقصد أن...؟"، "ماذا حدث بعد ذلك؟")
+الرد على المشاعر: انتبه لنبرة صوت المتحدث
+الأسئلة التوضيحية: مثل هل تقصد أن...؟، ماذا حدث بعد ذلك؟
 
 صناعة هويتك الصوتية:
 الثقة: نابعة من إيمانك بقيمتك وما تقدمه
@@ -59,38 +59,13 @@ Listening: An active process requiring concentration, understanding, and intelli
 
 How to listen actively?
 Don't wait for your turn to speak: Focus on what is being said now, not your next response
-Respond to emotions: Pay attention to the speaker's tone ("I feel you're excited about this idea!")
-Clarifying questions: ("Do you mean that...?", "What happened next?")
+Respond to emotions: Pay attention to the speaker's tone
+Clarifying questions: Like do you mean that...?, What happened next?
 
 Building your vocal identity:
 Confidence: Stemming from your belief in your value and what you offer
 Energy: Make your energy positive and contagious even on ordinary days
 Authenticity: Be honest in your responses and interactions, don't fake another personality"""
-            },
-            {
-                "type": "text", 
-                "title_ar": "التمارين العملية",
-                "title_en": "Practical Exercises",
-                "content_ar": """التمارين العملية الفردية:
-تمرين التحليل (15 دقيقة): استمع لمضيف مشهور وحلل 3 مواقف استخدم فيها الاستماع النشط
-تمرين التسجيل والتحليل الذاتي (30 دقيقة): سجل صوتك وأنت تتحدث عن كتاب أو فيلم، ثم حلل سرعتك، وضوحك، ونبرة صوتك
-تمرين الارتجال (15 دقيقة): تحدث عن كلمة عشوائية لمدة 60 ثانية دون توقف
-
-الأنشطة الجماعية:
-لعبة "همسة السلسلة" (15 دقيقة): لتدريب دقة الاستماع ونقل المعلومة
-"المقابلة النشطة" (20 دقيقة): يتدرب المتدربون على الاستماع بهدف الفهم وليس الرد
-
-المهمة اليومية: استمع إلى مضيف آخر وحلل طريقته في التعامل مع ضيوفه وجمهوره""",
-                "content_en": """Individual Practical Exercises:
-Analysis Exercise (15 minutes): Listen to a famous host and analyze 3 situations where they used active listening
-Recording and Self-Analysis Exercise (30 minutes): Record your voice while talking about a book or movie, then analyze your speed, clarity, and tone
-Improvisation Exercise (15 minutes): Talk about a random word for 60 seconds without stopping
-
-Group Activities:
-"Chain Whisper" Game (15 minutes): To train listening accuracy and information transfer
-"Active Interview" (20 minutes): Trainees practice listening for understanding rather than responding
-
-Daily Task: Listen to another host and analyze their way of dealing with guests and audience"""
             }
         ],
         "quiz": {
@@ -128,73 +103,48 @@ Daily Task: Listen to another host and analyze their way of dealing with guests 
                 "title_en": "Vocal Warm-up Exercises (Daily Routine)",
                 "content_ar": """تمارين الإحماء الصوتي (الروتين اليومي):
 التنفس الحجابي: تنفس بعمق من الأنف بحيث يتمدد بطنك، وازفر ببطء من الفم
-تمرين الشفاه: "برّر" شفتيك معاً وتحريكهما في كل الاتجاهات
+تمرين الشفاه: برّر شفتيك معاً وتحريكهما في كل الاتجاهات
 تمرين اللسان: لمس سقف الحلق وتحريك اللسان بشكل دائري
 
 وضوح الكلام هو الاحترافية ذاتها:
-ركز على مخارج الحروف، خاصة الحروف التي تحتاج لجهد (ق، غ، ظ، ر)
+ركز على مخارج الحروف، خاصة الحروف التي تحتاج لجهد مثل ق، غ، ظ، ر
 تخيل أنك ترمي الكلمات مثل السهام، يجب أن تكون واضحة ومستقيمة
-مثال: عند نطق كلمة "مستقبل"، ركز على كل حرف وخاصة حرف القاف
+مثال: عند نطق كلمة مستقبل، ركز على كل حرف وخاصة حرف القاف""",
                 "content_en": """Vocal Warm-up Exercises (Daily Routine):
 Diaphragmatic breathing: Breathe deeply through your nose so your stomach expands, exhale slowly through your mouth
 Lip exercises: Purse your lips together and move them in all directions
 Tongue exercises: Touch the roof of your mouth and move your tongue in circles
 
 Speech clarity is professionalism itself:
-Focus on letter articulation, especially letters that require effort (Qaf, Ghayn, Dhad, Ra)
+Focus on letter articulation, especially letters that require effort like Qaf, Ghayn, Dhad, Ra
 Imagine throwing words like arrows - they should be clear and straight
-Example: When pronouncing the word "future", focus on each letter especially the "Qaf" letter"""
+Example: When pronouncing the word future, focus on each letter especially the Qaf letter"""
             },
             {
                 "type": "text",
                 "title_ar": "موسيقى الكلام: كيف تصنع لحناً يجذب الأذن؟",
                 "title_en": "Speech Music: How to Create a Melody That Attracts the Ear?",
                 "content_ar": """موسيقى الكلام: كيف تصنع لحناً يجذب الأذن؟
-النبرة (Pitch): التغيير بين العالي والمنخفض يخلق تشويقاً
-السرعة (Pace): سريعة للإثارة، بطيئة للتأكيد
-الوقفات (Pauses): استخدمها قبل وبعد المعلومات المهمة
+النبرة: التغيير بين العالي والمنخفض يخلق تشويقاً
+السرعة: سريعة للإثارة، بطيئة للتأكيد
+الوقفات: استخدمها قبل وبعد المعلومات المهمة
 
 لغة الجسد للصوت:
 حتى لو لم يراك أحد، فإن ابتسامتك تسمع
 تحدث ووجهك يعبر، ويديك تتحركان""",
                 "content_en": """Speech Music: How to Create a Melody That Attracts the Ear?
-Tone (Pitch): Changing between high and low creates suspense
-Speed (Pace): Fast for excitement, slow for emphasis
+Tone: Changing between high and low creates suspense
+Speed: Fast for excitement, slow for emphasis
 Pauses: Use them before and after important information
 
 Body Language for Voice:
 Even if no one sees you, your smile can be heard
 Speak with expressive face and moving hands"""
-            },
-            {
-                "type": "text",
-                "title_ar": "التمارين العملية الفردية",
-                "title_en": "Individual Practical Exercises",
-                "content_ar": """التمارين العملية الفردية:
-تمرين الإحماء (20 دقيقة): التنفس والشفاه واللسان
-تمرين التعبير الصوتي (20 دقيقة): اقرأ قصة للأطفال بتعابير مبالغ فيها
-تمرين النبرة والسرعة (20 دقيقة): اقرأ خبراً جريدة بطرق مختلفة
-
-الأنشطة الجماعية:
-"الاتحاد الصوتي" (دويتو) (25 دقيقة): تقديم فقرة ترحيب بشكل متناغم
-"مسرح المشاعر" (20 دقيقة): قراءة جملة محايدة بمشاعر مختلفة
-
-المهمة اليومية: سجل نفسك تقول جملة "ماذا لو أخبرتك أن كل شيء تعرفه على وشك أن يتغير؟" بثلاث نبرات مختلفة""",
-                "content_en": """Individual Practical Exercises:
-Warm-up Exercise (20 minutes): Breathing, lips, and tongue
-Vocal Expression Exercise (20 minutes): Read a children's story with exaggerated expressions
-Tone and Speed Exercise (20 minutes): Read a newspaper article in different ways
-
-Group Activities:
-"Vocal Union" (Duet) (25 minutes): Present a welcome segment in harmony
-"Theater of Emotions" (20 minutes): Read a neutral sentence with different emotions
-
-Daily Task: Record yourself saying the sentence "What if I told you that everything you know is about to change?" in three different tones"""
             }
         ],
         "quiz": {
-            "title_ar": "اختبار اليوم الثاني: إتقان أدواتك - آلة الصوت والتعبير",
-            "title_en": "Day 2 Quiz: Mastering Your Tools - Voice Instrument and Expression",
+            "title_ar": "اختبار اليوم الثاني: إتقان أدواتك",
+            "title_en": "Day 2 Quiz: Mastering Your Tools",
             "questions": [
                 {
                     "question_ar": "ما هو التنفس الحجابي؟",
@@ -223,33 +173,33 @@ Daily Task: Record yourself saying the sentence "What if I told you that everyth
         "materials": [
             {
                 "type": "text",
-                "title_ar": "المقدمة (الخطاف - The Hook)",
+                "title_ar": "المقدمة (الخطاف)",
                 "title_en": "Introduction (The Hook)",
-                "content_ar": """المقدمة (الخطاف - The Hook):
+                "content_ar": """المقدمة (الخطاف):
 لديك 10-15 ثانية فقط للإمساك بانتباه المستمع
 أنواع الخطافات الفعالة:
-السؤال الصادم: "هل تعلم أن 90% من قراراتنا نتاج العقل الباطن؟"
-القصة المصغرة: "كنت أجري أمس، وفجأة... وقعت!"
-الإحصائية المدهشة: "يُهدر طعام يكفي لإطعام مليار شخص سنويًا"
-الموقف الطريف: "حاولت مرة أن أطهو بيضًا فاحترق المطبخ!"""",
-                "content_en": """Introduction (The Hook - The Hook):
+السؤال الصادم: هل تعلم أن 90% من قراراتنا نتاج العقل الباطن؟
+القصة المصغرة: كنت أجري أمس، وفجأة... وقعت!
+الإحصائية المدهشة: يُهدر طعام يكفي لإطعام مليار شخص سنوياً
+الموقف الطريف: حاولت مرة أن أطهو بيضاً فاحترق المطبخ!""",
+                "content_en": """Introduction (The Hook):
 You only have 10-15 seconds to grab the listener's attention
 Types of effective hooks:
-Shocking question: "Did you know that 90% of our decisions come from the subconscious?"
-Mini-story: "I was running yesterday, and suddenly... I fell!"
-Amazing statistic: "Enough food to feed one billion people is wasted annually"
-Funny situation: "I once tried to cook eggs and the kitchen caught fire!"""
+Shocking question: Did you know that 90% of our decisions come from the subconscious?
+Mini-story: I was running yesterday, and suddenly... I fell!
+Amazing statistic: Enough food to feed one billion people is wasted annually
+Funny situation: I once tried to cook eggs and the kitchen caught fire!"""
             },
             {
                 "type": "text",
-                "title_ar": "المحتوى (اللب - The Body)",
+                "title_ar": "المحتوى (اللب)",
                 "title_en": "Content (The Body)",
-                "content_ar": """المحتوى (اللب - The Body):
+                "content_ar": """المحتوى (اللب):
 ركز على نقطة رئيسية واحدة في كل فقرة
 استخدم القصص لجعل المعلومة أكثر جاذبية
 قدم أمثلة وتشبيهات لدعم فكرتك الرئيسية
 مثال: بدلاً من وصف مكان ممل، احكِ قصة حدثت لك فيه""",
-                "content_en": """Content (The Body - The Body):
+                "content_en": """Content (The Body):
 Focus on one main point in each segment
 Use stories to make information more attractive
 Provide examples and analogies to support your main idea
@@ -257,48 +207,25 @@ Example: Instead of describing a boring place, tell a story that happened to you
             },
             {
                 "type": "text",
-                "title_ar": "الخاتمة (الختام المؤثر - The Closing)",
+                "title_ar": "الخاتمة (الختام المؤثر)",
                 "title_en": "Conclusion (The Impactful Closing)",
-                "content_ar": """الخاتمة (الختام المؤثر - The Closing):
+                "content_ar": """الخاتمة (الختام المؤثر):
 أنواع الخواتم:
-التلخيص: "إذن، الفكرة الرئيسية هي..."
-دعوة للتفاعل: "ما رأيكم؟ اكتبوا في الدردشة"
-السؤال المفتوح: "لو كانت لديكم فرصة لسؤال أحد المشاهير، فمن تختارون؟"
-التلميح للمستقبل: "في الحلقة القادمة، سنكشف عن سر..."""",
-                "content_en": """Conclusion (The Impactful Closing - The Closing):
+التلخيص: إذن، الفكرة الرئيسية هي...
+دعوة للتفاعل: ما رأيكم؟ اكتبوا في الدردشة
+السؤال المفتوح: لو كانت لديكم فرصة لسؤال أحد المشاهير، فمن تختارون؟
+التلميح للمستقبل: في الحلقة القادمة، سنكشف عن سر...""",
+                "content_en": """Conclusion (The Impactful Closing):
 Types of conclusions:
-Summary: "So, the main idea is..."
-Call to interaction: "What do you think? Write in the chat"
-Open question: "If you had a chance to ask a celebrity, who would you choose?"
-Hint for the future: "In the next episode, we'll reveal the secret of..."""
-            },
-            {
-                "type": "text",
-                "title_ar": "التمارين العملية",
-                "title_en": "Practical Exercises",
-                "content_ar": """التمارين العملية الفردية:
-تمرين التخطيط (20 دقيقة): اختر موضوعاً واكتب له خطافاً ونقطة رئيسية وخاتمة
-تمرين التسجيل (25 دقيقة): سجل فقرة مصغرة عن كتابك المفضل
-
-الأنشطة الجماعية:
-"مصنع الخطافات" (20 دقيقة): ابتكار خطافات لمواضيع عادية
-"التقديم المتناوب" (دويتو) (30 دقيقة): تقديم فقرة سفر بشكل متناغم
-
-المهمة اليومية: استمع لبداية برنامجين وحلل نوع الخطاف المستخدم""",
-                "content_en": """Individual Practical Exercises:
-Planning Exercise (20 minutes): Choose a topic and write a hook, main point, and conclusion for it
-Recording Exercise (25 minutes): Record a mini-segment about your favorite book
-
-Group Activities:
-"Hook Factory" (20 minutes): Create hooks for ordinary topics
-"Alternating Presentation" (Duet) (30 minutes): Present a travel segment in harmony
-
-Daily Task: Listen to the beginning of two programs and analyze the type of hook used"""
+Summary: So, the main idea is...
+Call to interaction: What do you think? Write in the chat
+Open question: If you had a chance to ask a celebrity, who would you choose?
+Hint for the future: In the next episode, we'll reveal the secret of..."""
             }
         ],
         "quiz": {
-            "title_ar": "اختبار اليوم الثالث: هيكل الفقرة الناجحة",
-            "title_en": "Day 3 Quiz: Successful Segment Structure",
+            "title_ar": "اختبار اليوم الثالث: هيكل الفقرة",
+            "title_en": "Day 3 Quiz: Segment Structure",
             "questions": [
                 {
                     "question_ar": "كم ثانية لديك لجذب انتباه المستمع في البداية؟",
@@ -320,11 +247,7 @@ Daily Task: Listen to the beginning of two programs and analyze the type of hook
                 }
             ]
         }
-    }
-}
-
-# Add remaining days with EXACT content as provided
-TRAINING_DATA.update({
+    },
     4: {
         "title_ar": "اليوم الرابع: فقرات الألعاب التنشيطية - كسر الجليد وبناء المجتمعات",
         "title_en": "Day 4: Icebreaker Segments - Breaking Barriers and Building Communities",
@@ -336,20 +259,20 @@ TRAINING_DATA.update({
                 "content_ar": """الفلسفة وراء الألعاب التنشيطية:
 الهدف ليس اللعبة نفسها، بل التفاعل الاجتماعي الذي تخلقه
 اللعبة مجرد وسيلة لجعل الجمهور يشعر بالراحة والمتعة
-مثال: لعبة "ماذا ستفعل بمليون دولار" تفتح مجالاً للتعارف والإبداع
+مثال: لعبة ماذا ستفعل بمليون دولار تفتح مجالاً للتعارف والإبداع
 
 أنماط الألعاب التنشيطية:
-ألعاب التعارف: "ما هي القوة الخارقة التي تريدها؟"
+ألعاب التعارف: ما هي القوة الخارقة التي تريدها؟
 ألعاب الذكاء السريع: أسئلة معلومات عامة
 ألعاب التخمين: تخمين الشخصية، الفيلم، كلمة السر
 ألعاب الصور: وصف الصورة دون استخدام كلمات ممنوعة""",
                 "content_en": """The Philosophy Behind Icebreaker Games:
 The goal is not the game itself, but the social interaction it creates
 The game is just a means to make the audience feel comfortable and have fun
-Example: "What would you do with a million dollars" game opens opportunities for networking and creativity
+Example: What would you do with a million dollars game opens opportunities for networking and creativity
 
 Types of Icebreaker Games:
-Networking games: "What superpower would you want?"
+Networking games: What superpower would you want?
 Quick intelligence games: General knowledge questions
 Guessing games: Guess the character, movie, password
 Picture games: Describe the picture without using forbidden words"""
@@ -378,29 +301,6 @@ Golden Tips for Success:
 Referee with fun, not harshness
 Time management and maintaining program pace
 Maintain high energy throughout"""
-            },
-            {
-                "type": "text",
-                "title_ar": "التمارين العملية",
-                "title_en": "Practical Exercises",
-                "content_ar": """التمارين العملية الفردية:
-تمرين شرح القواعد (20 دقيقة): اشرح قواعد لعبتين في 30 ثانية لكل منهما
-تمرين التقديم الكامل (30 دقيقة): سجل فقرة لعبة كاملة مع متسابقين وهميين
-
-الأنشطة الجماعية:
-"تحدي كسر الجليد" (25 دقيقة): تصميم ألعاب جديدة وتقديمها
-"الدويو المرح" (30 دقيقة): تقديم لعبة "تخمين الشخصية" بشكل ثنائي
-
-المهمة اليومية: صمم لعبة تنشيطية جديدة واكتب قوانينها في 5 أسطر""",
-                "content_en": """Individual Practical Exercises:
-Rules Explanation Exercise (20 minutes): Explain rules of two games in 30 seconds each
-Full Presentation Exercise (30 minutes): Record a complete game segment with imaginary contestants
-
-Group Activities:
-"Icebreaker Challenge" (25 minutes): Design new games and present them
-"Fun Duet" (30 minutes): Present "Guess the Character" game as a duo
-
-Daily Task: Design a new icebreaker game and write its rules in 5 lines"""
             }
         ],
         "quiz": {
@@ -445,7 +345,7 @@ Daily Task: Design a new icebreaker game and write its rules in 5 lines"""
 أسرع إجابة: يطرح السؤال وأول من يرفع يده يفوز
 تحدي الـ 10 ثوانٍ: الإجابة 10 ثوانٍ
 أغنية وكلمة: معرفة الأغنية أو كلمة مرتبطة بها
-أسئلة "بنعم أو لا": أسئلة سريعة مباشرة""",
+أسئلة بنعم أو لا: أسئلة سريعة مباشرة""",
                 "content_en": """Speed Energy and Management:
 These segments require high energy and sharp focus
 Breathe deeply before starting to charge your energy
@@ -455,53 +355,30 @@ Types of Speed Games:
 Fastest answer: Question is asked and first to raise hand wins
 10-second challenge: Answer must be within 10 seconds
 Song and word: Identifying the song or related word
-"Yes or No" questions: Quick direct questions"""
+Yes or no questions: Quick direct questions"""
             },
             {
                 "type": "text",
                 "title_ar": "فن التعليق على الإجابات",
                 "title_en": "Art of Commenting on Answers",
                 "content_ar": """فن التعليق على الإجابات:
-الإجابة الصحيحة: "أحسنت!"، "انطلقت كالصاروخ!"
-الإجابة الخاطئة: "أوه، كنت قريب!"، "الفكرة قريبة!"
+الإجابة الصحيحة: أحسنت!، انطلقت كالصاروخ!
+الإجابة الخاطئة: أوه، كادت!، الفكرة قريبة!
 نبرة التشويق: استخدم صوتاً مرتفعاً ومتحمساً للإجابات الصحيحة
 
 أدوات التشويق والإثارة:
 صوت المؤقت يزيد التوتر
-المؤثرات الصوتية (جرس للفوز، صفارة للخطأ)
+المؤثرات الصوتية مثل جرس للفوز، صفارة للخطأ
 الخلفية الموسيقية السريعة""",
                 "content_en": """Art of Commenting on Answers:
-Correct answer: "Well done!", "Took off like a rocket!"
-Wrong answer: "Oh, almost!", "The idea is close!"
+Correct answer: Well done!, Took off like a rocket!
+Wrong answer: Oh, almost!, The idea is close!
 Suspense tone: Use high and excited voice for correct answers
 
 Tools for Suspense and Excitement:
 Timer sound increases tension
-Sound effects (bell for winning, whistle for wrong)
+Sound effects like bell for winning, whistle for wrong
 Fast background music"""
-            },
-            {
-                "type": "text",
-                "title_ar": "التمارين العملية",
-                "title_en": "Practical Exercises",
-                "content_ar": """التمارين العملية الفردية:
-تمرين الطلاقة والسرعة (20 دقيقة): قراءة أسئلة عامة بسرعة ووضوح
-تمرين المحاكاة الكاملة (35 دقيقة): تسجيل فقرة ألعاب سرعة كاملة
-
-الأنشطة الجماعية:
-"ماراثون الأسئلة الخاطفة" (30 دقيقة): منافسة بين فريقين بأسئلة سريعة
-"ثنائي السرعة" (25 دقيقة): تقديم فقرة سرعة بشكل ثنائي منسق
-
-المهمة اليومية: شاهد برنامج ألعاب سريعة وحلل كيف يحافظ المضيف على طاقته""",
-                "content_en": """Individual Practical Exercises:
-Fluency and Speed Exercise (20 minutes): Reading general questions quickly and clearly
-Full Simulation Exercise (35 minutes): Recording a complete speed games segment
-
-Group Activities:
-"Flash Questions Marathon" (30 minutes): Competition between two teams with quick questions
-"Speed Duet" (25 minutes): Presenting a speed segment as a coordinated duo
-
-Daily Task: Watch a fast-paced game show and analyze how the host maintains their energy"""
             }
         ],
         "quiz": {
@@ -528,11 +405,728 @@ Daily Task: Watch a fast-paced game show and analyze how the host maintains thei
                 }
             ]
         }
-    }
-})
+    },
+    6: {
+        "title_ar": "اليوم السادس: الفقرات الثقافية والمعلوماتية - من المعلومة الجافة إلى القصة المشوقة",
+        "title_en": "Day 6: Cultural and Informational Segments - From Dry Information to Exciting Stories",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "محاربة الملل في تقديم المعلومات",
+                "title_en": "Fighting Boredom in Presenting Information",
+                "content_ar": """محاربة الملل في تقديم المعلومات:
+اروي، لا تخبر: بدلاً من كان الطقس بارداً قل كان الصقيع يتسلل عبر سترتي
+اربط المعلومة بحياة المستمع: اجعل المعلومة شخصية ومؤثرة
+استخدم التشبيهات: الإنترنت يشبه الطريق السريع للبيانات
 
-# Continue adding days 6-15 with the same structure...
-# For brevity, I'll show the pattern and you can add the remaining days similarly
+تبسيط المعلومات المعقدة:
+التشبيه: البلوك تشين يشبه دفتر حسابات موزع
+القصص: ابحث عن القصة الإنسانية خلف المعلومة
+الأمثلة العملية: شرح النظريات من خلال تطبيقاتها اليومية""",
+                "content_en": """Fighting Boredom in Presenting Information:
+Narrate, don't tell: Instead of the weather was cold say the frost was creeping through my jacket
+Connect information to the listener's life: Make the information personal and impactful
+Use analogies: The internet is like a highway for data
+
+Simplifying Complex Information:
+Analogy: Blockchain is like a distributed ledger
+Stories: Look for the human story behind the information
+Practical examples: Explain theories through their daily applications"""
+            },
+            {
+                "type": "text",
+                "title_ar": "مصادر المعلومات ومصداقيتها",
+                "title_en": "Information Sources and Credibility",
+                "content_ar": """مصادر المعلومات ومصداقيتها:
+تحقق دائماً من مصدر المعلومة
+استخدم مواقع موثوقة ومراجع علمية
+ذكر مصدرك يزيد من مصداقيتك
+
+أنماط الفقرات الثقافية:
+هل تعلم؟ قصيرة وسريعة
+سؤال ثقافي مع مشاركة الجمهور
+حكاية من التاريخ بسرد قصصي مشوق""",
+                "content_en": """Information Sources and Credibility:
+Always verify the source of information
+Use reliable websites and scientific references
+Mentioning your source increases your credibility
+
+Types of Cultural Segments:
+Did you know? short and fast
+Cultural question with audience participation
+Historical tale with exciting storytelling"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم السادس: الفقرات الثقافية",
+            "title_en": "Day 6 Quiz: Cultural Segments",
+            "questions": [
+                {
+                    "question_ar": "كيف نحارب الملل في تقديم المعلومات؟",
+                    "question_en": "How do we fight boredom in presenting information?",
+                    "options_ar": ["باستخدام القصص والتشبيهات", "باستخدام مصطلحات معقدة", "بالتحدث بسرعة", "بعدم الربط بحياة المستمع"],
+                    "options_en": ["Using stories and analogies", "Using complex terms", "Speaking quickly", "Not connecting to listener's life"],
+                    "correct": 0,
+                    "explanation_ar": "استخدام القصص والتشبيهات وربط المعلومات بحياة المستمع يحارب الملل",
+                    "explanation_en": "Using stories, analogies and connecting information to the listener's life fights boredom"
+                },
+                {
+                    "question_ar": "لماذا يجب ذكر مصدر المعلومة؟",
+                    "question_en": "Why should we mention the source of information?",
+                    "options_ar": ["لإطالة الوقت", "لزيادة المصداقية", "لتعقيد المحتوى", "لإرباك المستمع"],
+                    "options_en": ["To extend time", "To increase credibility", "To complicate content", "To confuse the listener"],
+                    "correct": 1,
+                    "explanation_ar": "ذكر المصدر يزيد من مصداقية المضيف ويبني الثقة مع الجمهور",
+                    "explanation_en": "Mentioning the source increases the host's credibility and builds trust with the audience"
+                }
+            ]
+        }
+    },
+    7: {
+        "title_ar": "اليوم السابع: الفقرات التفاعلية - قلب البرنامج النابض",
+        "title_en": "Day 7: Interactive Segments - The Beating Heart of the Program",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "استراتيجيات جذب التفاعل",
+                "title_en": "Strategies for Attracting Interaction",
+                "content_ar": """استراتيجيات جذب التفاعل:
+الأسئلة المفتوحة: ما هو أكثر لحظة أعجبتكم؟ بدلاً من هل أعجبكم البرنامج؟
+استطلاعات الرأي: استخدام أدوات التصويت في التطبيقات
+الطلب المباشر: شاركونا صور طعامكم!، ما رأيكم في...؟
+
+فن إدارة التعليقات المباشرة:
+التعليق الإيجابي: اشكر ورد بالاسم مثل شكراً لك يا أحمد
+التعليق السلبي: تعامل بذكاء:
+اعترف بالمشكلة
+أعد صياغة الملاحظة
+رد بطريقة مهذبة
+التعليق المسيء: تجاهله أو أخرجه بهدوء""",
+                "content_en": """Strategies for Attracting Interaction:
+Open questions: What was your favorite moment? instead of Did you like the program?
+Opinion polls: Using voting tools in applications
+Direct request: Share your food photos!, What do you think about...?
+
+Art of Managing Live Comments:
+Positive comment: Thank and respond by name like Thank you, Ahmed
+Negative comment: Deal with it intelligently:
+Acknowledge the problem
+Rephrase the note
+Respond politely
+Offensive comment: Ignore it or remove it calmly"""
+            },
+            {
+                "type": "text",
+                "title_ar": "أنماط الفقرات التفاعلية",
+                "title_en": "Types of Interactive Segments",
+                "content_ar": """أنماط الفقرات التفاعلية:
+الرأي والرأي الآخر: مناقشة قضايا مختلفة الآراء
+قصص من حياتكم: مشاركة قصص شخصية
+استشارات الجمهور: طلب النصائح والأفكار""",
+                "content_en": """Types of Interactive Segments:
+Opinion and Counter-Opinion: Discussing issues with different views
+Stories from Your Lives: Sharing personal stories
+Audience Consultations: Requesting advice and ideas"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم السابع: الفقرات التفاعلية",
+            "title_en": "Day 7 Quiz: Interactive Segments",
+            "questions": [
+                {
+                    "question_ar": "ما هي أفضل أنواع الأسئلة لجذب التفاعل؟",
+                    "question_en": "What are the best types of questions to attract interaction?",
+                    "options_ar": ["الأسئلة المغلقة", "الأسئلة المفتوحة", "الأسئلة المعقدة", "الأسئلة الطويلة"],
+                    "options_en": ["Closed questions", "Open questions", "Complex questions", "Long questions"],
+                    "correct": 1,
+                    "explanation_ar": "الأسئلة المفتوحة تشجع على التفاعل والمشاركة أكثر من الأسئلة المغلقة",
+                    "explanation_en": "Open questions encourage more interaction and participation than closed questions"
+                },
+                {
+                    "question_ar": "كيف تتعامل مع التعليق السلبي؟",
+                    "question_en": "How do you handle a negative comment?",
+                    "options_ar": ["بالتجاهل التام", "بالصراخ", "بالتعامل بذكاء والاعتراف بالمشكلة", "بحذف التعليق فوراً"],
+                    "options_en": ["Complete ignoring", "Shouting", "Dealing intelligently and acknowledging the problem", "Deleting the comment immediately"],
+                    "correct": 2,
+                    "explanation_ar": "التعامل الذكي مع التعليقات السلبية يشمل الاعتراف بالمشكلة والرد المهذب",
+                    "explanation_en": "Intelligent handling of negative comments includes acknowledging the problem and polite response"
+                }
+            ]
+        }
+    },
+    8: {
+        "title_ar": "اليوم الثامن: فن الارتجال - عندما تفاجئك الأقدار",
+        "title_en": "Day 8: The Art of Improvisation - When Destiny Surprises You",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "حقيقة الارتجال",
+                "title_en": "The Truth About Improvisation",
+                "content_ar": """حقيقة الارتجال:
+الارتجال الحقيقي هو تحضير مسبق للأدوات وليس للنص
+جهز طقم النجاة قبل أن تحتاجه
+
+المواقف الطارئة الشائعة:
+صمت مطبق: ضيف لا يتكلم أو عدم تفاعل
+مشاكل تقنية: انقطاع الإنترنت، صوت غير واضح
+تفاعل ضعيف: لا أحد يشارك
+تعليقات محرجة: أسئلة أو ملاحظات غير متوقعة""",
+                "content_en": """The Truth About Improvisation:
+Real improvisation is preparing tools in advance, not the script
+Prepare your survival kit before you need it
+
+Common Emergency Situations:
+Complete silence: Guest doesn't speak or no interaction
+Technical problems: Internet disconnection, unclear sound
+Weak interaction: No one participates
+Embarrassing comments: Unexpected questions or remarks"""
+            },
+            {
+                "type": "text",
+                "title_ar": "أدوات الارتجال (طوق النجاة)",
+                "title_en": "Improvisation Tools (Lifebuoy)",
+                "content_ar": """أدوات الارتجال (طوق النجاة):
+الفكاهة: اضحك على الموقف مثل يبدو أن الإنترنت قرر أخذ استراحة!
+الاعتراف البسيط: أعتذر، ظهري انقطع للحظة!
+العودة لنقطة سابقة: هذا يذكرني بما كنا نتحدث عنه...
+الجعبة السرية: 3 قصص شخصية + 5 أسئلة عامة""",
+                "content_en": """Improvisation Tools (Lifebuoy):
+Humor: Laugh at the situation like Looks like the internet decided to take a break!
+Simple acknowledgment: I apologize, my connection dropped for a moment!
+Return to previous point: This reminds me of what we were talking about...
+Secret kit: 3 personal stories + 5 general questions"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم الثامن: فن الارتجال",
+            "title_en": "Day 8 Quiz: The Art of Improvisation",
+            "questions": [
+                {
+                    "question_ar": "ما هي حقيقة الارتجال الناجح؟",
+                    "question_en": "What is the truth about successful improvisation?",
+                    "options_ar": ["عدم التحضير مطلقاً", "التحضير المسبق للأدوات", "الحفظ عن ظهر قلب", "تجنب المواقف الصعبة"],
+                    "options_en": ["Never preparing", "Preparing tools in advance", "Memorizing by heart", "Avoiding difficult situations"],
+                    "correct": 1,
+                    "explanation_ar": "الارتجال الناجح يعتمد على التحضير المسبق للأدوات والموارد وليس على الحظ",
+                    "explanation_en": "Successful improvisation depends on preparing tools and resources in advance, not on luck"
+                },
+                {
+                    "question_ar": "ما هي إحدى أدوات الارتجال؟",
+                    "question_en": "What is one of the improvisation tools?",
+                    "options_ar": ["الصمت الدائم", "الفكاهة والضحك على الموقف", "إنهاء البرنامج فوراً", "إلقاء اللوم على الآخرين"],
+                    "options_en": ["Permanent silence", "Humor and laughing at the situation", "Ending the program immediately", "Blaming others"],
+                    "correct": 1,
+                    "explanation_ar": "الفكاهة أداة فعالة للتعامل مع المواقف الطارئة بطريقة إيجابية",
+                    "explanation_en": "Humor is an effective tool for dealing with emergency situations in a positive way"
+                }
+            ]
+        }
+    },
+    9: {
+        "title_ar": "اليوم التاسع: فن إدارة الحوار مع الضيوف - أنت قائد الأوركسترا",
+        "title_en": "Day 9: The Art of Managing Dialogue with Guests - You are the Orchestra Conductor",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "التحضير قبل البرنامج",
+                "title_en": "Preparation Before the Program",
+                "content_ar": """التحضير قبل البرنامج:
+البحث عن الضيف: اقرأ عنه، شاهد مقابلات سابقة
+تحديد الهدف: ما الرسالة الرئيسية من المقابلة؟
+إعداد النقاط الرئيسية: 5-7 نقاط وليس نصاً كاملاً
+الاتصال بالضيف: تعريفه بنمط البرنامج والنقاط الرئيسية
+
+فن صياغة الأسئلة:
+الأسئلة المفتوحة: كيف كانت رحلتك؟، ما الذي دفعك لهذا القرار؟
+أسئلة المشاعر: كيف شعرت في تلك اللحظة؟
+الأسئلة المتتابعة: ابنِ على إجابات الضيف""",
+                "content_en": """Preparation Before the Program:
+Research the guest: Read about them, watch previous interviews
+Define the goal: What is the main message from the interview?
+Prepare main points: 5-7 points, not a full script
+Contact the guest: Introduce them to the program style and main points
+
+Art of Formulating Questions:
+Open questions: How was your journey?, What prompted this decision?
+Emotion questions: How did you feel at that moment?
+Follow-up questions: Build on the guest's answers"""
+            },
+            {
+                "type": "text",
+                "title_ar": "دورك كقائد أوركسترا",
+                "title_en": "Your Role as Orchestra Conductor",
+                "content_ar": """دورك كقائد أوركسترا:
+لا تكن النجم: سلط الضوء على الضيف لا على نفسك
+الاستماع ثم الكلام: الاستماع الجيد يولد أسئلة أفضل
+إدارة الوقت: أنهِ الحوار بلباقة عندما يحين الموعد""",
+                "content_en": """Your Role as Orchestra Conductor:
+Don't be the star: Spotlight the guest, not yourself
+Listen then speak: Good listening generates better questions
+Time management: End the dialogue politely when time comes"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم التاسع: إدارة الحوار مع الضيوف",
+            "title_en": "Day 9 Quiz: Managing Dialogue with Guests",
+            "questions": [
+                {
+                    "question_ar": "ما هو دور المضيف في الحوار مع الضيوف؟",
+                    "question_en": "What is the host's role in dialogue with guests?",
+                    "options_ar": ["أن يكون النجم الرئيسي", "تسليط الضوء على الضيف", "التحدث أكثر من الضيف", "عدم الاستماع للضيف"],
+                    "options_en": ["Being the main star", "Spotlighting the guest", "Talking more than the guest", "Not listening to the guest"],
+                    "correct": 1,
+                    "explanation_ar": "دور المضيف هو تسليط الضوء على الضيف وإدارة الحوار وليس أن يكون النجم الرئيسي",
+                    "explanation_en": "The host's role is to spotlight the guest and manage the dialogue, not to be the main star"
+                },
+                {
+                    "question_ar": "كم نقطة رئيسية يجب إعدادها للمقابلة؟",
+                    "question_en": "How many main points should be prepared for the interview?",
+                    "options_ar": ["10-15 نقطة", "5-7 نقاط", "نقطة واحدة فقط", "لا داعي للإعداد"],
+                    "options_en": ["10-15 points", "5-7 points", "Only one point", "No need for preparation"],
+                    "correct": 1,
+                    "explanation_ar": "5-7 نقاط رئيسية تكفي لتوجيه الحوار دون التقيد بنص جامد",
+                    "explanation_en": "5-7 main points are sufficient to guide the dialogue without being tied to a rigid script"
+                }
+            ]
+        }
+    },
+    10: {
+        "title_ar": "اليوم العاشر: بناء البرنامج - من الفكرة إلى الخطة التنفيذية",
+        "title_en": "Day 10: Program Building - From Idea to Executive Plan",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "هندسة البرنامج",
+                "title_en": "Program Engineering",
+                "content_ar": """هندسة البرنامج:
+الفكرة: ماذا تقدم؟ مثل ترفيه، تعليم، إلهام
+الجمهور: لمن تقدمه؟ مثل شباب، عائلات، متخصصون
+الهدف: لماذا تقدمه؟ مثل تسلية، معرفة، مجتمع
+
+الروتين التحضيري:
+البحث وجمع المعلومات
+كتابة النقاط الرئيسية
+التحضير للفقرات
+الاختبار التقني
+الإعلان المسبق""",
+                "content_en": """Program Engineering:
+Idea: What do you offer? Like entertainment, education, inspiration
+Audience: Who do you offer it to? Like youth, families, specialists
+Goal: Why do you offer it? Like entertainment, knowledge, community
+
+Preparation Routine:
+Research and information gathering
+Writing main points
+Preparing segments
+Technical testing
+Advance announcement"""
+            },
+            {
+                "type": "text",
+                "title_ar": "السكريبت المرن",
+                "title_en": "Flexible Script",
+                "content_ar": """السكريبت المرن:
+ليس نصاً تقرأه، بل خارطة طريق
+مثال:
+0:00-0:02: مقدمة + خطاف
+0:02-0:05: ترحيب + تفاعل
+0:05-0:15: لعبة رئيسية
+0:15-0:25: مقابلة ضيف
+0:25-0:29: تفاعل جمهور
+0:29-0:30: خاتمة""",
+                "content_en": """Flexible Script:
+Not a text you read, but a road map
+Example:
+0:00-0:02: Introduction + hook
+0:02-0:05: Welcome + interaction
+0:05-0:15: Main game
+0:15-0:25: Guest interview
+0:25-0:29: Audience interaction
+0:29-0:30: Conclusion"""
+            },
+            {
+                "type": "text",
+                "title_ar": "صناعة الهوية",
+                "title_en": "Identity Creation",
+                "content_ar": """صناعة الهوية:
+اسم البرنامج وشعاره
+الموسيقى المميزة
+طريقة الترحيب الخاصة""",
+                "content_en": """Identity Creation:
+Program name and logo
+Distinctive music
+Special welcome method"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم العاشر: بناء البرنامج",
+            "title_en": "Day 10 Quiz: Program Building",
+            "questions": [
+                {
+                    "question_ar": "ما هو السكريبت المرن؟",
+                    "question_en": "What is a flexible script?",
+                    "options_ar": ["نص جامد للحفظ", "خارطة طريق مرنة", "قائمة بالكلمات", "رسالة بريد إلكتروني"],
+                    "options_en": ["Rigid text for memorization", "Flexible road map", "Word list", "Email message"],
+                    "correct": 1,
+                    "explanation_ar": "السكريبت المرن هو خارطة طريق تساعد في التنقل بين فقرات البرنامج وليس نصاً جامداً",
+                    "explanation_en": "A flexible script is a road map that helps navigate between program segments, not a rigid text"
+                },
+                {
+                    "question_ar": "ما هي عناصر هندسة البرنامج؟",
+                    "question_en": "What are the elements of program engineering?",
+                    "options_ar": ["الفكرة والجمهور والهدف", "الموسيقى فقط", "الألوان والتصميم", "الصوت فقط"],
+                    "options_en": ["Idea, audience, and goal", "Music only", "Colors and design", "Sound only"],
+                    "correct": 0,
+                    "explanation_ar": "هندسة البرنامج تشمل الفكرة (المحتوى)، الجمهور (المستهدف)، والهدف (الغاية)",
+                    "explanation_en": "Program engineering includes the idea (content), audience (target), and goal (purpose)"
+                }
+            ]
+        }
+    },
+    11: {
+        "title_ar": "اليوم الحادي عشر: الإخراج الصوتي - اللمسات الأخيرة الاحترافية",
+        "title_en": "Day 11: Audio Production - Professional Final Touches",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "الموسيقى والمؤثرات الصوتية",
+                "title_en": "Music and Sound Effects",
+                "content_ar": """الموسيقى والمؤثرات الصوتية:
+الملح وليس الطبق الرئيسي: الإفراط يفسد التجربة
+المقدمة والخاتمة: موسيقى مميزة وقصيرة
+الانتقالات: موسيقى خفيفة بين الفقرات
+
+اختيار الموسيقى المناسبة:
+البرامج المرحة: موسيقى سريعة وإيقاعية
+البرامج الجادة: موسيقى هادئة أو بدون موسيقى
+المصادر: استخدم موسيقى خالية من الحقوق""",
+                "content_en": """Music and Sound Effects:
+The salt, not the main dish: Excess spoils the experience
+Introduction and conclusion: Distinctive and short music
+Transitions: Light music between segments
+
+Choosing Appropriate Music:
+Fun programs: Fast and rhythmic music
+Serious programs: Calm music or no music
+Sources: Use royalty-free music"""
+            },
+            {
+                "type": "text",
+                "title_ar": "معالجة الصوت الأساسية",
+                "title_en": "Basic Audio Processing",
+                "content_ar": """معالجة الصوت الأساسية:
+إزالة الضوضاء: تزيل همسة الميكروفون
+معادلة الصوت: تحسين الوضوح
+الضغط: توحيد مستوى الصوت""",
+                "content_en": """Basic Audio Processing:
+Noise removal: Removes microphone hiss
+Equalization: Improves clarity
+Compression: Unifies volume level"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم الحادي عشر: الإخراج الصوتي",
+            "title_en": "Day 11 Quiz: Audio Production",
+            "questions": [
+                {
+                    "question_ar": "ما دور الموسيقى في البرنامج الصوتي؟",
+                    "question_en": "What is the role of music in audio programs?",
+                    "options_ar": ["الطبق الرئيسي", "الملح الذي يضيف نكهة", "إزالة الصوت الأساسي", "إطالة مدة البرنامج"],
+                    "options_en": ["The main dish", "The salt that adds flavor", "Removing the main sound", "Extending program duration"],
+                    "correct": 1,
+                    "explanation_ar": "الموسيقى هي مثل الملح الذي يضيف نكهة ولا يجب أن تطغى على المحتوى الرئيسي",
+                    "explanation_en": "Music is like salt that adds flavor and should not overwhelm the main content"
+                },
+                {
+                    "question_ar": "ما هي معالجة الصوت الأساسية؟",
+                    "question_en": "What is basic audio processing?",
+                    "options_ar": ["إزالة الضوضاء والمعادلة والضغط", "تسجيل الصوت فقط", "إضافة المؤثرات فقط", "رفع الصوت فقط"],
+                    "options_en": ["Noise removal, equalization, and compression", "Only recording sound", "Only adding effects", "Only increasing volume"],
+                    "correct": 0,
+                    "explanation_ar": "المعالجة الأساسية تشمل إزالة الضوضاء، معادلة الصوت، وضغط مستوى الصوت",
+                    "explanation_en": "Basic processing includes noise removal, sound equalization, and volume compression"
+                }
+            ]
+        }
+    },
+    12: {
+        "title_ar": "اليوم الثاني عشر: فنون التقديم المتقدمة - لمسة العبقرية",
+        "title_en": "Day 12: Advanced Presentation Arts - The Touch of Genius",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "الستوري تيلينغ (فن سرد القصة)",
+                "title_en": "Storytelling (The Art of Narration)",
+                "content_ar": """الستوري تيلينغ (فن سرد القصة):
+الهيكل الذهبي:
+البداية: الشخصية في سياقها العادي
+الحدث المحفز: شيء يغير كل شيء
+الرحلة والصراع: التحديات
+الذروة: لحظة الحسم
+النهاية: التغيير والدرس""",
+                "content_en": """Storytelling (The Art of Narration):
+The Golden Structure:
+Beginning: The character in their normal context
+Triggering event: Something that changes everything
+Journey and conflict: The challenges
+Climax: The moment of decision
+End: The change and lesson"""
+            },
+            {
+                "type": "text",
+                "title_ar": "الدعابة الذكية",
+                "title_en": "Smart Humor",
+                "content_ar": """الدعابة الذكية:
+اضحك على نفسك لا على الآخرين
+المفارقة: هدفي كان رياضياً محترفاً ولكن الأريكة كانت أقوى!
+المراقبة: التعليق على مواقف الحياة اليومية
+
+التوقيت الكوميدي:
+الوقفة قبل النكتة: تزيد التشويق
+الوقفة بعد النكتة: تعطي وقتاً للضحك
+الإيقاع: التناوب بين السرعة والبطء""",
+                "content_en": """Smart Humor:
+Laugh at yourself, not at others
+Irony: My goal was to be a professional athlete but the couch was stronger!
+Observation: Commenting on daily life situations
+
+Comedic Timing:
+Pause before the joke: Increases suspense
+Pause after the joke: Gives time to laugh
+Rhythm: Alternating between speed and slowness"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم الثاني عشر: التقديم المتقدم",
+            "title_en": "Day 12 Quiz: Advanced Presentation",
+            "questions": [
+                {
+                    "question_ar": "ما هو الهيكل الذهبي لسرد القصة؟",
+                    "question_en": "What is the golden structure of storytelling?",
+                    "options_ar": ["البداية والنهاية فقط", "البداية، الوسط، النهاية", "الهيكل الذهبي المكون من 5 أجزاء", "لا يوجد هيكل محدد"],
+                    "options_en": ["Beginning and end only", "Beginning, middle, end", "The 5-part golden structure", "No specific structure"],
+                    "correct": 2,
+                    "explanation_ar": "الهيكل الذهبي لسرد القصة يتكون من 5 أجزاء: البداية، الحدث المحفز، الرحلة، الذروة، النهاية",
+                    "explanation_en": "The golden structure of storytelling consists of 5 parts: beginning, triggering event, journey, climax, end"
+                },
+                {
+                    "question_ar": "ما هي الدعابة الذكية؟",
+                    "question_en": "What is smart humor?",
+                    "options_ar": ["الضحك على الآخرين", "الضحك على النفس", "السخرية من الجميع", "عدم استخدام الدعابة"],
+                    "options_en": ["Laughing at others", "Laughing at oneself", "Mocking everyone", "Not using humor"],
+                    "correct": 1,
+                    "explanation_ar": "الدعابة الذكية تعني الضحك على النفس والتعليق على مواقف الحياة اليومية بشكل إيجابي",
+                    "explanation_en": "Smart humor means laughing at oneself and commenting on daily life situations in a positive way"
+                }
+            ]
+        }
+    },
+    13: {
+        "title_ar": "اليوم الثالث عشر: فهم جمهورك - من مستمع إلى مشجع",
+        "title_en": "Day 13: Understanding Your Audience - From Listener to Fan",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "أنماط الشخصيات في الجمهور",
+                "title_en": "Personality Types in the Audience",
+                "content_ar": """أنماط الشخصيات في الجمهور:
+المتفاعل: يعلق ويسأل باستمرار
+المشجع: حاضر دائماً ونادر التفاعل
+الناقد: يرى الأخطاء فقط
+الخجول: يستمع فقط
+
+فهم احتياجات كل نمط:
+المتفاعل: يحتاج للإحساس بالتقدير
+المشجع: يحتاج للشعور بالانتماء
+الناقد: يحتاج للاستماع الجيد
+الخجول: يحتاج للراحة والأمان""",
+                "content_en": """Personality Types in the Audience:
+Interactive: Constantly comments and asks questions
+Supporter: Always present but rarely interacts
+Critic: Only sees mistakes
+Shy: Only listens
+
+Understanding Each Type's Needs:
+Interactive: Needs to feel appreciated
+Supporter: Needs to feel belonging
+Critic: Needs good listening
+Shy: Needs comfort and safety"""
+            },
+            {
+                "type": "text",
+                "title_ar": "بناء المجتمع",
+                "title_en": "Building Community",
+                "content_ar": """بناء المجتمع:
+التكرار: المواظبة على الموعد تخلق عادة
+التفاعل الشخصي: مناداتهم بالأسماء
+تلبية الرغبات: تخصيص فقرات بناء على طلباتهم
+
+جمع التغذية الراجعة:
+الاستبيانات السريعة
+الأسئلة المباشرة
+مراقبة نوعية التفاعل""",
+                "content_en": """Building Community:
+Repetition: Consistency with timing creates habits
+Personal interaction: Calling them by names
+Fulfilling desires: Customizing segments based on their requests
+
+Collecting Feedback:
+Quick surveys
+Direct questions
+Monitoring interaction quality"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم الثالث عشر: فهم الجمهور",
+            "title_en": "Day 13 Quiz: Understanding Audience",
+            "questions": [
+                {
+                    "question_ar": "كيف نبني مجتمعاً مخلصاً حول البرنامج؟",
+                    "question_en": "How do we build a loyal community around the program?",
+                    "options_ar": ["بالتكرار والتفاعل الشخصي", "بالتجاهل المستمر", "بعدم الرد على التعليقات", "باستخدام مصطلحات معقدة"],
+                    "options_en": ["Through repetition and personal interaction", "Through constant ignoring", "By not responding to comments", "By using complex terms"],
+                    "correct": 0,
+                    "explanation_ar": "بناء المجتمع المخلص يتم من خلال التكرار في المواعيد والتفاعل الشخصي مع الجمهور",
+                    "explanation_en": "Building a loyal community happens through timing consistency and personal interaction with the audience"
+                },
+                {
+                    "question_ar": "ما هي احتياجات المشجع في الجمهور؟",
+                    "question_en": "What are the needs of the supporter in the audience?",
+                    "options_ar": ["التقدير المستمر", "الشعور بالانتماء", "النقد الدائم", "التجاهل"],
+                    "options_en": ["Constant appreciation", "Feeling of belonging", "Constant criticism", "Ignoring"],
+                    "correct": 1,
+                    "explanation_ar": "المشجع يحتاج للشعور بالانتماء للمجتمع والبرنامج",
+                    "explanation_en": "The supporter needs to feel a sense of belonging to the community and program"
+                }
+            ]
+        }
+    },
+    14: {
+        "title_ar": "اليوم الرابع عشر: التطبيق الشامل - بروفة الإخراج النهائي",
+        "title_en": "Day 14: Comprehensive Application - Final Rehearsal",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "فنون الربط",
+                "title_en": "Arts of Connection",
+                "content_ar": """فنون الربط:
+اللفظي: والحديث عن السفر يحضرني لعبة عن دول العالم
+الصوتي: استخدام موسيقى انتقالية
+المنطقي: بعد كل هذا المرح، حان وقت الاستراحة بمعلومة مدهشة""",
+                "content_en": """Arts of Connection:
+Verbal: And talking about travel brings me to a game about world countries
+Audio: Using transition music
+Logical: After all this fun, it's time for a break with an amazing fact"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم الرابع عشر: التطبيق الشامل",
+            "title_en": "Day 14 Quiz: Comprehensive Application",
+            "questions": [
+                {
+                    "question_ar": "ما هو الهدف من البروفة النهائية؟",
+                    "question_en": "What is the goal of the final rehearsal?",
+                    "options_ar": ["إضاعة الوقت", "دمج جميع المهارات", "التوقف عن التعلم", "عدم التحضير"],
+                    "options_en": ["Wasting time", "Integrating all skills", "Stopping learning", "Not preparing"],
+                    "correct": 1,
+                    "explanation_ar": "البروفة النهائية تهدف إلى دمج جميع المهارات المكتسبة وتطبيقها بشكل متكامل",
+                    "explanation_en": "The final rehearsal aims to integrate all acquired skills and apply them comprehensively"
+                },
+                {
+                    "question_ar": "ما هي أنواع الربط بين الفقرات؟",
+                    "question_en": "What are the types of connection between segments?",
+                    "options_ar": ["اللفظي والصوتي والمنطقي", "الصوتي فقط", "البصري فقط", "لا يوجد ربط"],
+                    "options_en": ["Verbal, audio, and logical", "Audio only", "Visual only", "No connection"],
+                    "correct": 0,
+                    "explanation_ar": "الربط بين الفقرات يشمل الربط اللفظي، الصوتي، والمنطقي لتحقيق تدفق سلس",
+                    "explanation_en": "Connection between segments includes verbal, audio, and logical connection to achieve smooth flow"
+                }
+            ]
+        }
+    },
+    15: {
+        "title_ar": "اليوم الخامس عشر: التقييم والتطوير المستمر - رحلة لا تتوقف",
+        "title_en": "Day 15: Evaluation and Continuous Development - A Journey That Never Stops",
+        "materials": [
+            {
+                "type": "text",
+                "title_ar": "التقييم الذاتي الموضوعي",
+                "title_en": "Objective Self-Evaluation",
+                "content_ar": """التقييم الذاتي الموضوعي:
+استمع كجمهور: هل أنت مستمتع؟
+استمع كخبير: حلل الوضوح، الطلاقة، التنظيم
+ابحث عن نقاط القوة والضعف
+
+معايير التقييم:
+وضوح الصوت والكلام
+تنظيم المحتوى
+جودة التفاعل
+الإبداع والتميز
+الطاقة والإيجابية""",
+                "content_en": """Objective Self-Evaluation:
+Listen as an audience: Are you enjoying?
+Listen as an expert: Analyze clarity, fluency, organization
+Look for strengths and weaknesses
+
+Evaluation Standards:
+Sound and speech clarity
+Content organization
+Interaction quality
+Creativity and excellence
+Energy and positivity"""
+            },
+            {
+                "type": "text",
+                "title_ar": "خطة التطوير المستمر",
+                "title_en": "Continuous Development Plan",
+                "content_ar": """خطة التطوير المستمر:
+مواكبة الترندات
+التعلم المستمر
+طلب التغذية الراجعة
+تحديث المهارات
+
+الاستدامة:
+ضع حدوداً للراحة
+تذكر لماذا بدأت
+احتفل بالإنجازات""",
+                "content_en": """Continuous Development Plan:
+Keeping up with trends
+Continuous learning
+Requesting feedback
+Updating skills
+
+Sustainability:
+Set comfort boundaries
+Remember why you started
+Celebrate achievements"""
+            }
+        ],
+        "quiz": {
+            "title_ar": "اختبار اليوم الخامس عشر: التطوير المستمر",
+            "title_en": "Day 15 Quiz: Continuous Development",
+            "questions": [
+                {
+                    "question_ar": "ما هو سر النجاح المستمر في مجال الاستضافة الصوتية؟",
+                    "question_en": "What is the secret of continuous success in audio hosting?",
+                    "options_ar": ["التوقف عن التعلم", "التطوير المستمر", "التكرار دون تجديد", "عدم طلب التغذية الراجعة"],
+                    "options_en": ["Stopping learning", "Continuous development", "Repetition without renewal", "Not requesting feedback"],
+                    "correct": 1,
+                    "explanation_ar": "سر النجاح المستمر هو التطوير المستمر والتعلم الدائم ومواكبة الجديد",
+                    "explanation_en": "The secret of continuous success is continuous development, permanent learning, and keeping up with new trends"
+                },
+                {
+                    "question_ar": "لماذا يجب الاحتفال بالإنجازات؟",
+                    "question_en": "Why should we celebrate achievements?",
+                    "options_ar": ["للتوقف عن العمل", "لتحفيز الاستمرار والتطور", "لإضاعة الوقت", "للتقليل من الإنجازات"],
+                    "options_en": ["To stop working", "To motivate continuation and development", "To waste time", "To minimize achievements"],
+                    "correct": 1,
+                    "explanation_ar": "الاحتفال بالإنجازات يحفز على الاستمرار ويبني الثقة للتطور المستقبلي",
+                    "explanation_en": "Celebrating achievements motivates continuation and builds confidence for future development"
+                }
+            ]
+        }
+    }
+}
 
 # =============================================================================
 # USER PROGRESS TRACKING AND QUIZ STATE MANAGEMENT
