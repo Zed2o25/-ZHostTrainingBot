@@ -416,11 +416,49 @@ class Database:
                 host=host_port[0],
                 port=int(host_port[1]) if len(host_port) > 1 else 5432,
                 database=host_db[1],
-                ssl_context=True  # ← ADD THIS LINE FOR SSL
+                ssl_context=True  # SSL enabled
             )
         else:
             # Fallback for other URL formats
-            return pg8000.connect(self.db_url, ssl_context=True)  # ← ADD SSL HERE TOO
+            return pg8000.connect(self.db_url, ssl_context=True)
+    
+    def execute_query(self, query, params=None, fetch=False, fetch_one=False):
+        """Execute query with proper error handling"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            
+            if fetch_one:
+                result = cursor.fetchone()
+                if result:
+                    # Convert to dictionary with column names
+                    columns = [desc[0] for desc in cursor.description]
+                    result = dict(zip(columns, result))
+            elif fetch:
+                results = cursor.fetchall()
+                if results:
+                    columns = [desc[0] for desc in cursor.description]
+                    result = [dict(zip(columns, row)) for row in results]
+                else:
+                    result = []
+            else:
+                result = None
+            
+            conn.commit()
+            return result
+            
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Database error in query '{query}': {e}")
+            raise e
+        finally:
+            cursor.close()
+            conn.close()
     
     def init_db(self):
         """Initialize PostgreSQL database tables"""
@@ -431,6 +469,7 @@ class Database:
             self.execute_query('''
                 CREATE TABLE IF NOT EXISTS user_progress (
                     user_id BIGINT PRIMARY KEY,
+                    user_name TEXT,
                     current_day INTEGER DEFAULT 1,
                     completed_days TEXT DEFAULT '[]',
                     quiz_scores TEXT DEFAULT '{}',
@@ -542,13 +581,14 @@ class Database:
             
             self.execute_query('''
                 INSERT INTO user_progress 
-                (user_id, current_day, completed_days, quiz_scores, last_activity, 
+                (user_id, user_name, current_day, completed_days, quiz_scores, last_activity, 
                  streak_count, last_active_date, completed_voice_exercises, 
                  breathing_sessions_completed, storytelling_exercises, completed_exercises,
                  total_study_time, achievements_unlocked, daily_tasks_completed, 
                  recording_sessions, current_vocal_task, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (user_id) DO UPDATE SET
+                user_name = EXCLUDED.user_name,
                 current_day = EXCLUDED.current_day,
                 completed_days = EXCLUDED.completed_days,
                 quiz_scores = EXCLUDED.quiz_scores,
@@ -567,6 +607,7 @@ class Database:
                 updated_at = EXCLUDED.updated_at
             ''', (
                 user_id,
+                progress.get("user_name"),
                 progress.get("current_day", 1),
                 json.dumps(completed_days),
                 json.dumps(progress.get("quiz_scores", {})),
@@ -585,7 +626,7 @@ class Database:
                 datetime.now().isoformat()
             ))
             
-            logging.info(f"✅ Saved progress for user {user_id}")
+            logging.info(f"✅ Saved progress for user {user_id} ({progress.get('user_name', 'No name')})")
             
         except Exception as e:
             logging.error(f"Error saving user progress for {user_id}: {e}")
@@ -638,7 +679,7 @@ class Database:
             logging.error(f"Error saving user preferences for {user_id}: {e}")
 
     # =============================================================================
-    # ADD THESE MISSING METHODS - PROPERLY INDENTED
+    # MISSING METHODS - ADD THESE
     # =============================================================================
     
     def save_vocal_task_completion(self, user_id, task_id, audio_file_path=None, analysis_results=None, feedback_received=None):
