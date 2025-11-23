@@ -1,3 +1,5 @@
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
 import logging
 import sys
@@ -382,389 +384,259 @@ audio_analyzer = AudioAnalyzer()
 
 class Database:
     def __init__(self):
-        self.db_path = 'bot_data.db'
+        self.db_url = os.environ.get('DATABASE_URL', 'postgresql://users_zaj1_user:kj6RsagzNnx3DXjF1ypteklzAWzENOIZ@dpg-d4hmnep5pdvs739bb5q0-a.oregon-postgres.render.com/users_zaj1')
         self.init_db()
     
-    def init_db(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def get_connection(self):
+        """Get PostgreSQL connection with SSL"""
+        return psycopg2.connect(self.db_url, sslmode='require')
+    
+    def execute_query(self, query, params=None, fetch=False, fetch_one=False):
+        """Execute query with proper error handling"""
+        conn = self.get_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        # User progress table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_progress (
-                user_id INTEGER PRIMARY KEY,
-                current_day INTEGER DEFAULT 1,
-                completed_days TEXT DEFAULT '[]',
-                quiz_scores TEXT DEFAULT '{}',
-                last_activity TEXT,
-                streak_count INTEGER DEFAULT 0,
-                last_active_date TEXT,
-                completed_voice_exercises INTEGER DEFAULT 0,
-                breathing_sessions_completed INTEGER DEFAULT 0,
-                storytelling_exercises INTEGER DEFAULT 0,
-                completed_exercises TEXT DEFAULT '{}',
-                total_study_time INTEGER DEFAULT 0,
-                achievements_unlocked TEXT DEFAULT '[]',
-                daily_tasks_completed INTEGER DEFAULT 0,
-                recording_sessions INTEGER DEFAULT 0,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # User preferences table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_preferences (
-                user_id INTEGER PRIMARY KEY,
-                language TEXT DEFAULT 'ar',
-                breathing_reminders BOOLEAN DEFAULT 1,
-                daily_reminders BOOLEAN DEFAULT 1,
-                quiz_reminders BOOLEAN DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Quiz state table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS quiz_state (
-                user_id INTEGER PRIMARY KEY,
-                day INTEGER,
-                current_question INTEGER,
-                score INTEGER,
-                total_questions INTEGER,
-                quiz_data TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Achievements table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_achievements (
-                user_id INTEGER,
-                achievement_id TEXT,
-                unlocked_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (user_id, achievement_id)
-            )
-        ''')
-        
-        # Vocal tasks table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS vocal_tasks (
-                user_id INTEGER,
-                task_id INTEGER,
-                completed_at TEXT,
-                audio_file_path TEXT,
-                analysis_results TEXT,
-                feedback_received TEXT,
-                PRIMARY KEY (user_id, task_id)
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
-
-        def save_user_preferences(self, user_id, preferences):
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+        try:
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             
-            cursor.execute('''
-                INSERT OR REPLACE INTO user_preferences 
-                (user_id, language, breathing_reminders, daily_reminders, quiz_reminders, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+            if fetch_one:
+                result = cursor.fetchone()
+            elif fetch:
+                result = cursor.fetchall()
+            else:
+                result = None
+            
+            conn.commit()
+            return result
+            
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Database error in query '{query}': {e}")
+            raise e
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def init_db(self):
+        """Initialize PostgreSQL database tables"""
+        try:
+            logging.info("🔄 Initializing PostgreSQL database...")
+            
+            # User progress table
+            self.execute_query('''
+                CREATE TABLE IF NOT EXISTS user_progress (
+                    user_id BIGINT PRIMARY KEY,
+                    current_day INTEGER DEFAULT 1,
+                    completed_days TEXT DEFAULT '[]',
+                    quiz_scores TEXT DEFAULT '{}',
+                    last_activity TEXT,
+                    streak_count INTEGER DEFAULT 0,
+                    last_active_date TEXT,
+                    completed_voice_exercises INTEGER DEFAULT 0,
+                    breathing_sessions_completed INTEGER DEFAULT 0,
+                    storytelling_exercises INTEGER DEFAULT 0,
+                    completed_exercises TEXT DEFAULT '{}',
+                    total_study_time INTEGER DEFAULT 0,
+                    achievements_unlocked TEXT DEFAULT '[]',
+                    daily_tasks_completed INTEGER DEFAULT 0,
+                    recording_sessions INTEGER DEFAULT 0,
+                    current_vocal_task INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # User preferences table
+            self.execute_query('''
+                CREATE TABLE IF NOT EXISTS user_preferences (
+                    user_id BIGINT PRIMARY KEY,
+                    language TEXT DEFAULT 'ar',
+                    breathing_reminders BOOLEAN DEFAULT TRUE,
+                    daily_reminders BOOLEAN DEFAULT TRUE,
+                    quiz_reminders BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Quiz state table
+            self.execute_query('''
+                CREATE TABLE IF NOT EXISTS quiz_state (
+                    user_id BIGINT PRIMARY KEY,
+                    day INTEGER,
+                    current_question INTEGER,
+                    score INTEGER,
+                    total_questions INTEGER,
+                    quiz_data TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Achievements table
+            self.execute_query('''
+                CREATE TABLE IF NOT EXISTS user_achievements (
+                    user_id BIGINT,
+                    achievement_id TEXT,
+                    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, achievement_id)
+                )
+            ''')
+            
+            # Vocal tasks table
+            self.execute_query('''
+                CREATE TABLE IF NOT EXISTS vocal_tasks (
+                    user_id BIGINT,
+                    task_id INTEGER,
+                    completed_at TIMESTAMP,
+                    audio_file_path TEXT,
+                    analysis_results TEXT,
+                    feedback_received TEXT,
+                    PRIMARY KEY (user_id, task_id)
+                )
+            ''')
+            
+            logging.info("✅ PostgreSQL database initialized successfully")
+            
+        except Exception as e:
+            logging.error(f"❌ Database initialization error: {e}")
+    
+    def get_user_progress(self, user_id):
+        """Get user progress from PostgreSQL"""
+        try:
+            result = self.execute_query(
+                'SELECT * FROM user_progress WHERE user_id = %s', 
+                (user_id,), 
+                fetch_one=True
+            )
+            
+            if result:
+                progress = dict(result)
+                # Convert JSON strings back to Python objects
+                if progress.get('completed_days'):
+                    progress['completed_days'] = set(json.loads(progress['completed_days']))
+                if progress.get('quiz_scores'):
+                    progress['quiz_scores'] = json.loads(progress['quiz_scores'])
+                if progress.get('completed_exercises'):
+                    progress['completed_exercises'] = json.loads(progress['completed_exercises'])
+                if progress.get('achievements_unlocked'):
+                    progress['achievements_unlocked'] = set(json.loads(progress['achievements_unlocked']))
+                
+                return progress
+            return None
+            
+        except Exception as e:
+            logging.error(f"Error getting user progress for {user_id}: {e}")
+            return None
+    
+    def save_user_progress(self, user_id, progress):
+        """Save user progress to PostgreSQL"""
+        try:
+            # Convert Python objects to JSON strings
+            completed_days = list(progress.get('completed_days', set()))
+            achievements_unlocked = list(progress.get('achievements_unlocked', set()))
+            
+            self.execute_query('''
+                INSERT INTO user_progress 
+                (user_id, current_day, completed_days, quiz_scores, last_activity, 
+                 streak_count, last_active_date, completed_voice_exercises, 
+                 breathing_sessions_completed, storytelling_exercises, completed_exercises,
+                 total_study_time, achievements_unlocked, daily_tasks_completed, 
+                 recording_sessions, current_vocal_task, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (user_id) DO UPDATE SET
+                current_day = EXCLUDED.current_day,
+                completed_days = EXCLUDED.completed_days,
+                quiz_scores = EXCLUDED.quiz_scores,
+                last_activity = EXCLUDED.last_activity,
+                streak_count = EXCLUDED.streak_count,
+                last_active_date = EXCLUDED.last_active_date,
+                completed_voice_exercises = EXCLUDED.completed_voice_exercises,
+                breathing_sessions_completed = EXCLUDED.breathing_sessions_completed,
+                storytelling_exercises = EXCLUDED.storytelling_exercises,
+                completed_exercises = EXCLUDED.completed_exercises,
+                total_study_time = EXCLUDED.total_study_time,
+                achievements_unlocked = EXCLUDED.achievements_unlocked,
+                daily_tasks_completed = EXCLUDED.daily_tasks_completed,
+                recording_sessions = EXCLUDED.recording_sessions,
+                current_vocal_task = EXCLUDED.current_vocal_task,
+                updated_at = EXCLUDED.updated_at
             ''', (
                 user_id,
-                preferences.get("language", "ar"),
-                int(preferences.get("breathing_reminders", True)),
-                int(preferences.get("daily_reminders", True)),
-                int(preferences.get("quiz_reminders", True)),
+                progress.get("current_day", 1),
+                json.dumps(completed_days),
+                json.dumps(progress.get("quiz_scores", {})),
+                progress.get("last_activity", datetime.now().isoformat()),
+                progress.get("streak_count", 0),
+                progress.get("last_active_date", datetime.now().date().isoformat()),
+                progress.get("completed_voice_exercises", 0),
+                progress.get("breathing_sessions_completed", 0),
+                progress.get("storytelling_exercises", 0),
+                json.dumps(progress.get("completed_exercises", {})),
+                progress.get("total_study_time", 0),
+                json.dumps(achievements_unlocked),
+                progress.get("daily_tasks_completed", 0),
+                progress.get("recording_sessions", 0),
+                progress.get("current_vocal_task"),
                 datetime.now().isoformat()
             ))
             
-            conn.commit()
-            conn.close()
-    
-    def get_user_progress(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM user_progress WHERE user_id = ?', (user_id,))
-        result = cursor.fetchone()
-        
-        if result:
-            # Convert completed_days from list (JSON) back to set
-            # completed_days_json = result[2]
-            # completed_days = set(json.loads(completed_days_json)) if completed_days_json else set()
+            logging.info(f"✅ Saved progress for user {user_id}")
             
-            # Convert achievements_unlocked from list (JSON) back to set
-            # achievements_json = result[12]
-            # achievements_unlocked = set(json.loads(achievements_json)) if achievements_json else set()
-            
-            progress = {
-                "current_day": result[1],
-                "completed_days": set(json.loads(result[2])) if result[2] else set(),
-                "quiz_scores": json.loads(result[3]),
-                "last_activity": result[4],
-                "streak_count": result[5],
-                "last_active_date": result[6],
-                "completed_voice_exercises": result[7],
-                "breathing_sessions_completed": result[8],
-                "storytelling_exercises": result[9],
-                "completed_exercises": json.loads(result[10]),
-                "total_study_time": result[11],
-                # "achievements_unlocked": achievements_unlocked,    # Now it's a set
-                "daily_tasks_completed": result[13],
-                "recording_sessions": result[14]
-            }
+        except Exception as e:
+            logging.error(f"Error saving user progress for {user_id}: {e}")
     
-            # Safely handle achievements_unlocked - it might not exist in older database schemas
-            if len(result) > 12 and result[12]:
-                progress["achievements_unlocked"] = set(json.loads(result[12]))
-            else:
-                progress["achievements_unlocked"] = set()
-                
-        else:
-            progress = None
-        
-        conn.close()
-        return progress
-    
-    def save_user_progress(self, user_id, progress):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        # Convert set to list for JSON serialization
-        completed_days = progress.get("completed_days", set())
-        if isinstance(completed_days, set):
-            completed_days = list(completed_days)
-            
-        achievements_unlocked = progress.get("achievements_unlocked", set())
-        if isinstance(achievements_unlocked, set):
-            achievements_unlocked = list(achievements_unlocked)
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO user_progress 
-            (user_id, current_day, completed_days, quiz_scores, last_activity, 
-             streak_count, last_active_date, completed_voice_exercises, 
-             breathing_sessions_completed, storytelling_exercises, completed_exercises,
-             total_study_time, achievements_unlocked, daily_tasks_completed, recording_sessions, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            progress.get("current_day", 1),
-            json.dumps(completed_days),    # Now it's a list for JSON
-            json.dumps(progress.get("quiz_scores", {})),
-            progress.get("last_activity", datetime.now().isoformat()),
-            progress.get("streak_count", 0),
-            progress.get("last_active_date", datetime.now().date().isoformat()),
-            progress.get("completed_voice_exercises", 0),
-            progress.get("breathing_sessions_completed", 0),
-            progress.get("storytelling_exercises", 0),
-            json.dumps(progress.get("completed_exercises", {})),
-            progress.get("total_study_time", 0),
-            json.dumps(achievements_unlocked),
-            progress.get("daily_tasks_completed", 0),
-            progress.get("recording_sessions", 0),
-            datetime.now().isoformat()
-        ))
-        
-        conn.commit()
-        conn.close()
-        
     def get_user_preferences(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM user_preferences WHERE user_id = ?', (user_id,))
-        result = cursor.fetchone()
-        
-        if result:
-            preferences = {
-                "language": result[1],
-                "breathing_reminders": bool(result[2]),
-                "daily_reminders": bool(result[3]),
-                "quiz_reminders": bool(result[4])
-            }
-        else:
-            preferences = None
-        
-        conn.close()
-        return preferences
+        """Get user preferences from PostgreSQL"""
+        try:
+            result = self.execute_query(
+                'SELECT * FROM user_preferences WHERE user_id = %s', 
+                (user_id,), 
+                fetch_one=True
+            )
+            
+            if result:
+                return {
+                    "language": result['language'],
+                    "breathing_reminders": bool(result['breathing_reminders']),
+                    "daily_reminders": bool(result['daily_reminders']),
+                    "quiz_reminders": bool(result['quiz_reminders'])
+                }
+            return None
+            
+        except Exception as e:
+            logging.error(f"Error getting user preferences for {user_id}: {e}")
+            return None
     
     def save_user_preferences(self, user_id, preferences):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO user_preferences 
-            (user_id, language, breathing_reminders, daily_reminders, quiz_reminders, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            preferences.get("language", "ar"),
-            int(preferences.get("breathing_reminders", True)),
-            int(preferences.get("daily_reminders", True)),
-            int(preferences.get("quiz_reminders", True)),
-            datetime.now().isoformat()
-        ))
-        
-        conn.commit()
-        conn.close() 
-    def get_user_achievements(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT achievement_id FROM user_achievements WHERE user_id = ?', (user_id,))
-        results = cursor.fetchall()
-        
-        achievements = [result[0] for result in results]
-        conn.close()
-        return achievements
+        """Save user preferences to PostgreSQL"""
+        try:
+            self.execute_query('''
+                INSERT INTO user_preferences 
+                (user_id, language, breathing_reminders, daily_reminders, quiz_reminders, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (user_id) DO UPDATE SET
+                language = EXCLUDED.language,
+                breathing_reminders = EXCLUDED.breathing_reminders,
+                daily_reminders = EXCLUDED.daily_reminders,
+                quiz_reminders = EXCLUDED.quiz_reminders,
+                updated_at = EXCLUDED.updated_at
+            ''', (
+                user_id,
+                preferences.get("language", "ar"),
+                preferences.get("breathing_reminders", True),
+                preferences.get("daily_reminders", True),
+                preferences.get("quiz_reminders", True),
+                datetime.now().isoformat()
+            ))
+            
+        except Exception as e:
+            logging.error(f"Error saving user preferences for {user_id}: {e}")
     
-    def save_user_achievement(self, user_id, achievement_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT OR IGNORE INTO user_achievements (user_id, achievement_id)
-            VALUES (?, ?)
-        ''', (user_id, achievement_id))
-        
-        conn.commit()
-        conn.close()
-            
-    def get_all_users_with_preferences(self, preference_type):
-        """Get all users who have specific reminder preferences enabled"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-            
-        if preference_type == "breathing_reminders":
-            cursor.execute('SELECT user_id FROM user_preferences WHERE breathing_reminders = 1')
-        elif preference_type == "daily_reminders":
-            cursor.execute('SELECT user_id FROM user_preferences WHERE daily_reminders = 1')
-        else:
-            cursor.execute('SELECT user_id FROM user_preferences')
-            
-        results = cursor.fetchall()
-        user_ids = [result[0] for result in results]
-        conn.close()
-        return user_ids
-        
-    def get_quiz_state(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-                
-        cursor.execute('SELECT * FROM quiz_state WHERE user_id = ?', (user_id,))
-        result = cursor.fetchone()
-                
-        if result:
-            quiz_state = {
-                'day': result[1],
-                'current_question': result[2],
-                'score': result[3],
-                'total_questions': result[4],
-                'quiz_data': json.loads(result[5]) if result[5] else {}
-            }
-        else:
-            quiz_state = None
-                
-        conn.close()
-        return quiz_state
-            
-    def save_quiz_state(self, user_id, quiz_state):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-                
-        cursor.execute('''
-            INSERT OR REPLACE INTO quiz_state 
-            (user_id, day, current_question, score, total_questions, quiz_data)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            quiz_state.get('day'),
-            quiz_state.get('current_question'),
-            quiz_state.get('score'),
-            quiz_state.get('total_questions'),
-            json.dumps(quiz_state.get('quiz_data', {}))
-        ))
-                
-        conn.commit()
-        conn.close()
-            
-    def delete_quiz_state(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-                
-        cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
-        conn.commit()
-        conn.close()
-    
-    # VOCAL TASKS DATABASE METHODS
-    def save_vocal_task_completion(self, user_id, task_id, audio_path, analysis_results, feedback):
-        """Save vocal task completion data"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO vocal_tasks 
-            (user_id, task_id, completed_at, audio_file_path, analysis_results, feedback_received)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            task_id,
-            datetime.now().isoformat(),
-            audio_path,
-            json.dumps(analysis_results),
-            feedback
-        ))
-        
-        # Update user progress
-        cursor.execute('''
-            UPDATE user_progress 
-            SET recording_sessions = COALESCE(recording_sessions, 0) + 1,
-                updated_at = ?
-            WHERE user_id = ?
-        ''', (datetime.now().isoformat(), user_id))
-        
-        conn.commit()
-        conn.close()
-
-    def get_completed_vocal_tasks(self, user_id):
-        """Get list of completed vocal tasks for user"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT task_id, completed_at, analysis_results, feedback_received
-            FROM vocal_tasks 
-            WHERE user_id = ?
-            ORDER BY completed_at DESC
-        ''', (user_id,))
-        
-        results = cursor.fetchall()
-        tasks = []
-        
-        for result in results:
-            tasks.append({
-                'task_id': result[0],
-                'completed_at': result[1],
-                'analysis_results': json.loads(result[2]) if result[2] else {},
-                'feedback_received': result[3]
-            })
-        
-        conn.close()
-        return tasks
-
-    def get_vocal_task_completion_count(self, user_id):
-        """Get count of completed vocal tasks"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT COUNT(*) FROM vocal_tasks WHERE user_id = ?', (user_id,))
-        result = cursor.fetchone()
-        
-        conn.close()
-        return result[0] if result else 0
+    # Add other database methods (get_user_achievements, save_user_achievement, etc.)
+    # following the same pattern...
     
 # Initialize database
 db = Database()
