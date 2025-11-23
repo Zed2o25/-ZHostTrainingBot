@@ -163,55 +163,58 @@ VOCAL_TASKS = {
 # SIMPLIFIED AUDIO ANALYSIS ENGINE (No external dependencies at all)
 # =============================================================================
 
-def calculate_scores(self, duration, file_size):
-    """Calculate scores without numpy - FIXED VERSION"""
-    # Engagement score based on duration
-    if duration < 10:
-        engagement = 0.4  # Too short
-    elif duration < 30:
-        engagement = 0.6  # Brief
-    elif 30 <= duration <= 180:
-        engagement = 0.8  # Ideal
-    else:
-        engagement = 0.7  # Long
-    
-    # Clarity score based on file quality (simplified)
-    if file_size > 0 and duration > 0:
-        quality_ratio = file_size / duration
-        if quality_ratio > 8000:
-            clarity = 0.9  # High quality
-        elif quality_ratio > 4000:
-            clarity = 0.7  # Medium quality
-        else:
-            clarity = 0.5  # Low quality
-    else:
-        clarity = 0.6  # Default
-    
-    # Confidence score (simplified heuristic)
-    if duration >= 45 and clarity > 0.7:
-        confidence = 0.8  # Confident delivery
-    elif duration >= 20:
-        confidence = 0.7  # Moderate confidence
-    else:
-        confidence = 0.5  # Needs work
-    
-    # Add missing scores that are referenced in send_vocal_feedback
-    pace = 0.7  # Default pace score
-    energy = 0.6  # Default energy score  
-    filler_count = max(0, int((180 - duration) / 10))  # Estimate filler words
-    
-    # Overall score (simple average)
-    overall = (engagement + clarity + confidence) / 3.0
-    
-    return {
-        'engagement': engagement,
-        'clarity': clarity,
-        'confidence': confidence,
-        'pace': pace,
-        'energy': energy,
-        'filler_count': filler_count,
-        'overall': overall
-    }
+# =============================================================================
+# SIMPLIFIED AUDIO ANALYSIS ENGINE (No external dependencies at all)
+# =============================================================================
+
+class AudioAnalyzer:
+    def __init__(self):
+        self.professional_feedback = {
+            'ar': {
+                'duration': {
+                    'too_short': "المدة قصيرة جداً. حاول التحدث لمدة أطول (30-90 ثانية).",
+                    'good': "المدة مناسبة. استمر هكذا!",
+                    'too_long': "المدة طويلة. حاول الاختصار مع الحفاظ على الجودة."
+                },
+                'engagement': {
+                    'excellent': "أداؤك ممتاز! تحافظ على انتباه المستمع.",
+                    'good': "أداؤك جيد، يمكن تحسينه أكثر.",
+                    'needs_work': "حاول إضافة المزيد من الحماس والتعبير."
+                },
+                'clarity': {
+                    'excellent': "وضوحك رائع! الكلمات مفهومة تماماً.",
+                    'good': "الوضوح جيد، يمكن تحسين بعض النقاط.",
+                    'needs_work': "حاول تحسين وضوح الكلام والنطق."
+                },
+                'confidence': {
+                    'excellent': "ثقتك عالية وتظهر في صوتك!",
+                    'good': "ثقتك جيدة، يمكن تعزيزها أكثر.",
+                    'needs_work': "حاول بناء الثقة في صوتك من خلال التدريب."
+                }
+            },
+            'en': {
+                'duration': {
+                    'too_short': "Duration is too short. Try speaking longer (30-90 seconds).",
+                    'good': "Duration is appropriate. Keep it up!",
+                    'too_long': "Duration is too long. Try to be more concise while maintaining quality."
+                },
+                'engagement': {
+                    'excellent': "Excellent performance! You maintain listener attention.",
+                    'good': "Good performance, can be improved further.",
+                    'needs_work': "Try adding more enthusiasm and expression."
+                },
+                'clarity': {
+                    'excellent': "Your clarity is excellent! Words are perfectly understandable.",
+                    'good': "Clarity is good, some points can be improved.",
+                    'needs_work': "Try to improve speech clarity and articulation."
+                },
+                'confidence': {
+                    'excellent': "Your confidence is high and shows in your voice!",
+                    'good': "Your confidence is good, can be enhanced further.",
+                    'needs_work': "Try to build confidence in your voice through practice."
+                }
+            }
+        }
     
     def analyze_audio(self, file_info, task_id, language='ar'):
         """Simplified audio analysis using only file metadata - no numpy needed"""
@@ -234,6 +237,9 @@ def calculate_scores(self, duration, file_size):
                     'engagement_score': scores['engagement'],
                     'clarity_score': scores['clarity'],
                     'confidence_score': scores['confidence'],
+                    'pace_score': scores['pace'],  # Added missing score
+                    'energy_score': scores['energy'],  # Added missing score
+                    'filler_count': scores['filler_count'],  # Added missing score
                     'overall_score': scores['overall']
                 },
                 'feedback': feedback,
@@ -248,7 +254,7 @@ def calculate_scores(self, duration, file_size):
             }
     
     def calculate_scores(self, duration, file_size):
-        """Calculate scores without numpy"""
+        """Calculate scores without numpy - FIXED VERSION"""
         # Engagement score based on duration
         if duration < 10:
             engagement = 0.4  # Too short
@@ -279,6 +285,11 @@ def calculate_scores(self, duration, file_size):
         else:
             confidence = 0.5  # Needs work
         
+        # Add missing scores that are referenced in send_vocal_feedback
+        pace = 0.7  # Default pace score
+        energy = 0.6  # Default energy score  
+        filler_count = max(0, int((180 - duration) / 10))  # Estimate filler words
+        
         # Overall score (simple average)
         overall = (engagement + clarity + confidence) / 3.0
         
@@ -286,6 +297,9 @@ def calculate_scores(self, duration, file_size):
             'engagement': engagement,
             'clarity': clarity,
             'confidence': confidence,
+            'pace': pace,
+            'energy': energy,
+            'filler_count': filler_count,
             'overall': overall
         }
     
@@ -3622,7 +3636,7 @@ Choose from the menu below to start your journey! 🚀"""
         task_data = VOCAL_TASKS.get(task_id, {})
         task_name = task_data.get('task_ar', '') if language == 'ar' else task_data.get('task_en', '')
         
-        # Save completion to database
+        # Save completion to database - FIXED METHOD NAME
         db.save_vocal_task_completion(
             user_id, 
             task_id, 
@@ -3672,7 +3686,7 @@ Choose from the menu below to start your journey! 🚀"""
         new_achievements = check_and_unlock_achievements(user_id)
         if new_achievements:
             send_achievement_notification(self.bot, user_id, new_achievements)
-
+        
     def show_vocal_tasks_menu(self, chat_id, user_id):
         """Show vocal tasks menu"""
         language = self.get_user_language(user_id)
