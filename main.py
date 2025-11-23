@@ -382,7 +382,7 @@ class AudioAnalyzer:
         # Task-specific recommendations
         if language == 'ar':
             recommendations.append("• استمر في التدريب المنتظم للتحسين المستمر")
-            recommendations.append("• اطلب feedback من الأصدقاء أو الزملاء")
+            recommendations.append("• اطلب feedback  من الأصدقاء أو الزملاء الملاحظات")
         else:
             recommendations.append("• Continue regular practice for continuous improvement")
             recommendations.append("• Ask for feedback from friends or colleagues")
@@ -2452,7 +2452,7 @@ Comedic Dialogue (Duet) (35 minutes): Discuss daily topics in a humorous way"""
 
 تلبية الرغبات: تخصيص فقرات بناء على طلباتهم
 
-جمع التغذية الراجعة:
+جمع التغذية الراجعة / الملاحظات:
 
 الاستبيانات السريعة
 
@@ -2640,7 +2640,7 @@ Logical: After all this fun, it's time for a break with an amazing fact"""
 
 التعلم المستمر
 
-طلب التغذية الراجعة
+طلب التغذية الراجعة/الملاحظات
 
 الاستدامة:
 
@@ -2684,7 +2684,7 @@ Strategic Planning Exercise (30 minutes): Plan for the next 90 days"""
                 "type": "text",
                 "title_ar": "الأنشطة الجماعية",
                 "title_en": "Group Activities",
-                "content_ar": """حلقة التغذية الراجعة (60 دقيقة): تقديم ملاحظات بناءة
+                "content_ar": """حلقة التغذية الراجعة/الملاحظات (60 دقيقة): تقديم ملاحظات بناءة
 احتفال التخرج (45 دقيقة): مشاركة الخطط المستقبلية""",
                 "content_en": """Feedback Circle (60 minutes): Provide constructive feedback
 Graduation Celebration (45 minutes): Share future plans"""
@@ -2704,7 +2704,7 @@ Graduation Celebration (45 minutes): Share future plans"""
                 {
                     "question_ar": "ما هو سر النجاح المستمر في مجال الاستضافة الصوتية؟",
                     "question_en": "What is the secret of continuous success in audio hosting?",
-                    "options_ar": ["التوقف عن التعلم", "التطوير المستمر", "التكرار دون تجديد", "عدم طلب التغذية الراجعة"],
+                    "options_ar": ["التوقف عن التعلم", "التطوير المستمر", "التكرار دون تجديد", "عدم طلب الملاحظات/التغذية الراجعة"],
                     "options_en": ["Stopping learning", "Continuous development", "Repetition without renewal", "Not requesting feedback"],
                     "correct": 1,
                     "explanation_ar": "سر النجاح المستمر هو التطوير المستمر والتعلم الدائم ومواكبة الجديد",
@@ -3658,7 +3658,7 @@ Choose from the menu below to start your journey! 🚀"""
             message += f"• السرعة: {analysis_result['analysis']['pace_score']*100:.0f}%\n"
             message += f"• الطاقة: {analysis_result['analysis']['energy_score']*100:.0f}%\n"
             message += f"• كلمات الحشو: {analysis_result['analysis']['filler_count']}\n\n"
-            message += "💡 **التغذية الراجعة:**\n"
+            message += "💡 **التغذية الراجعة/الملاحظات:**\n"
             message += analysis_result['feedback'] + "\n\n"
             message += "🚀 **التوصيات:**\n"
             for rec in analysis_result.get('recommendations', []):
