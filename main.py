@@ -123,16 +123,16 @@ class Database:
         
         if result:
             # Convert completed_days from list (JSON) back to set
-            completed_days_json = result[2]
-            completed_days = set(json.loads(completed_days_json)) if completed_days_json else set()
+            # completed_days_json = result[2]
+            # completed_days = set(json.loads(completed_days_json)) if completed_days_json else set()
             
             # Convert achievements_unlocked from list (JSON) back to set
-            achievements_json = result[12]
-            achievements_unlocked = set(json.loads(achievements_json)) if achievements_json else set()
+            # achievements_json = result[12]
+            # achievements_unlocked = set(json.loads(achievements_json)) if achievements_json else set()
             
             progress = {
                 "current_day": result[1],
-                "completed_days": completed_days,  # Now it's a set
+                "completed_days": set(json.loads(result[2])) if result[2] else set(),
                 "quiz_scores": json.loads(result[3]),
                 "last_activity": result[4],
                 "streak_count": result[5],
@@ -142,10 +142,17 @@ class Database:
                 "storytelling_exercises": result[9],
                 "completed_exercises": json.loads(result[10]),
                 "total_study_time": result[11],
-                "achievements_unlocked": achievements_unlocked,    # Now it's a set
+                # "achievements_unlocked": achievements_unlocked,    # Now it's a set
                 "daily_tasks_completed": result[13],
                 "recording_sessions": result[14]
             }
+    
+            # Safely handle achievements_unlocked - it might not exist in older database schemas
+            if len(result) > 12 and result[12]:
+                progress["achievements_unlocked"] = set(json.loads(result[12]))
+            else:
+                progress["achievements_unlocked"] = set()
+                
         else:
             progress = None
         
@@ -160,6 +167,10 @@ class Database:
         completed_days = progress.get("completed_days", set())
         if isinstance(completed_days, set):
             completed_days = list(completed_days)
+            
+        achievements_unlocked = progress.get("achievements_unlocked", set())
+        if isinstance(achievements_unlocked, set):
+            achievements_unlocked = list(achievements_unlocked)
         
         cursor.execute('''
             INSERT OR REPLACE INTO user_progress 
