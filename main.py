@@ -10,6 +10,13 @@ import requests
 import sqlite3
 import json
 import atexit
+import speech_recognition as sr
+import tempfile
+import wave
+import contextlib
+import numpy as np
+from pydub import AudioSegment
+from io import BytesIO
 
 # Configure logging
 logging.basicConfig(
@@ -18,6 +25,412 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+
+# =============================================================================
+# VOCAL ANALYSIS CONFIGURATION
+# =============================================================================
+
+VOCAL_TASKS = {
+    1: {
+        "task_ar": "تسجيل مقدمة شخصية",
+        "task_en": "Personal Introduction Recording",
+        "description_ar": "سجل نفسك تتحدث عن نفسك لمدة 60 ثانية. ركز على الوضوح والثقة.",
+        "description_en": "Record yourself talking about yourself for 60 seconds. Focus on clarity and confidence.",
+        "evaluation_criteria": {
+            "clarity": "وضوح الكلام والنطق",
+            "pace": "سرعة الكلام المناسبة",
+            "confidence": "الثقة في الصوت",
+            "energy": "الطاقة والإيجابية"
+        }
+    },
+    2: {
+        "task_ar": "تمرين النبرة والتعبير",
+        "task_en": "Tone and Expression Exercise", 
+        "description_ar": "اقرأ النص التالي بثلاث نبرات مختلفة: سعيدة، جادة، متحمسة",
+        "description_en": "Read the following text with three different tones: happy, serious, excited",
+        "text_ar": "اليوم هو بداية رحلة جديدة مليئة بالإمكانيات والفرص الرائعة.",
+        "text_en": "Today is the beginning of a new journey full of amazing possibilities and opportunities.",
+        "evaluation_criteria": {
+            "tone_variety": "تنوع النبرات",
+            "emotional_expression": "التعبير العاطفي",
+            "appropriateness": "ملائمة النبرة للمحتوى"
+        }
+    },
+    3: {
+        "task_ar": "تمرين القصة القصيرة",
+        "task_en": "Short Story Exercise",
+        "description_ar": "احكِ قصة قصيرة من حياتك لمدة 90 ثانية.",
+        "description_en": "Tell a short story from your life for 90 seconds.",
+        "evaluation_criteria": {
+            "story_structure": "هيكل القصة",
+            "engagement": "جذب الانتباه",
+            "pacing": "إيقاع السرد",
+            "vocal_expression": "التعبير الصوتي"
+        }
+    },
+    4: {
+        "task_ar": "تقديم لعبة تفاعلية",
+        "task_en": "Interactive Game Presentation",
+        "description_ar": "قدم لعبة تفاعلية كما لو كنت في بث مباشر.",
+        "description_en": "Present an interactive game as if you're in a live broadcast.",
+        "evaluation_criteria": {
+            "enthusiasm": "الحماس",
+            "clarity": "وضوح الشرح", 
+            "engagement": "جذب الجمهور",
+            "pace": "السرعة المناسبة"
+        }
+    },
+    5: {
+        "task_ar": "تمرين السرعة والطلاقة",
+        "task_en": "Speed and Fluency Exercise",
+        "description_ar": "تحدث عن موضوع عشوائي لمدة 60 ثانية دون توقف.",
+        "description_en": "Talk about a random topic for 60 seconds without stopping.",
+        "evaluation_criteria": {
+            "fluency": "الطلاقة",
+            "coherence": "الترابط",
+            "pace_consistency": "ثبات السرعة",
+            "filler_words": "تقليل كلمات الحشو"
+        }
+    },
+    6: {
+        "task_ar": "الربط بين الفقرات",
+        "task_en": "Segment Transition Exercise",
+        "description_ar": "اربط بين ثلاث فقرات مختلفة بسلاسة.",
+        "description_en": "Smoothly transition between three different segments.",
+        "evaluation_criteria": {
+            "smoothness": "سلاسة الانتقال",
+            "creativity": "الإبداع في الربط",
+            "relevance": "ملائمة الروابط",
+            "flow": "التدفق الطبيعي"
+        }
+    },
+    7: {
+        "task_ar": "الرد على التعليقات",
+        "task_en": "Comment Response Exercise",
+        "description_ar": "رد على ثلاثة تعليقات افتراضية من الجمهور.",
+        "description_en": "Respond to three hypothetical audience comments.",
+        "evaluation_criteria": {
+            "empathy": "التعاطف",
+            "professionalism": "الاحترافية",
+            "clarity": "الوضوح",
+            "appropriateness": "ملائمة الرد"
+        }
+    },
+    8: {
+        "task_ar": "الارتجال في موقف صعب",
+        "task_en": "Improvisation in Difficult Situation", 
+        "description_ar": "تعامل مع موقف صعب (انقطاع تقني) بالارتجال.",
+        "description_en": "Handle a difficult situation (technical issue) with improvisation.",
+        "evaluation_criteria": {
+            "composure": "الهدوء",
+            "creativity": "الإبداع",
+            "professionalism": "الاحترافية",
+            "recovery": "سرعة التعافي"
+        }
+    },
+    9: {
+        "task_ar": "مقابلة ضيف افتراضي",
+        "task_en": "Virtual Guest Interview",
+        "description_ar": "أجرِ مقابلة مع ضيف افتراضي لمدة 3 دقائق.",
+        "description_en": "Conduct a 3-minute interview with a virtual guest.",
+        "evaluation_criteria": {
+            "question_quality": "جودة الأسئلة",
+            "listening": "الاستماع الفعال",
+            "flow": "تدفق الحوار",
+            "guest_engagement": "إشراك الضيف"
+        }
+    },
+    10: {
+        "task_ar": "الختام المؤثر",
+        "task_en": "Impactful Closing",
+        "description_ar": "اختم برنامجاً افتراضياً بختام مؤثر ومشوق.",
+        "description_en": "Close a virtual program with an impactful and exciting conclusion.",
+        "evaluation_criteria": {
+            "impact": "التأثير",
+            "memorability": "القدرة على البقاء في الذاكرة",
+            "call_to_action": "نداء الفعل",
+            "emotional_connection": "الارتباط العاطفي"
+        }
+    }
+}
+
+# =============================================================================
+# AUDIO ANALYSIS ENGINE
+# =============================================================================
+
+class AudioAnalyzer:
+    def __init__(self):
+        self.recognizer = sr.Recognizer()
+        self.professional_feedback = {
+            'ar': {
+                'clarity': {
+                    'excellent': "وضوح صوتك ممتاز! الكلمات مفهومة تماماً.",
+                    'good': "وضوحك جيد، يمكن تحسين بعض الحروف.",
+                    'needs_work': "يحتاج الوضوح لتحسين. ركز على مخارج الحروف."
+                },
+                'pace': {
+                    'excellent': "سرعة كلامك مثالية للاستماع.",
+                    'good': "السرعة جيدة، يمكن تعديلها قليلاً.",
+                    'needs_work': "السرعة تحتاج تحسين. حاول التأني أو التسريع حسب السياق."
+                },
+                'energy': {
+                    'excellent': "طاقتك معدية وتحافظ على انتباه المستمع!",
+                    'good': "الطاقة جيدة، يمكن زيادتها قليلاً.",
+                    'needs_work': "الطاقة منخفضة. حاول إضافة حيوية لصوتك."
+                },
+                'confidence': {
+                    'excellent': "ثقتك عالية وتظهر في صوتك بوضوح!",
+                    'good': "ثقتك جيدة، يمكن تعزيزها أكثر.",
+                    'needs_work': "الثقة تحتاج تحسين. تدرب على التحدث بوضوح."
+                },
+                'filler_words': {
+                    'excellent': "ممتاز! لا تستخدم كلمات حشو.",
+                    'good': "جيد، قللت من كلمات الحشو.",
+                    'needs_work': "حاول تقليل كلمات الحشو مثل 'امم'، 'ااه'."
+                }
+            },
+            'en': {
+                'clarity': {
+                    'excellent': "Your clarity is excellent! Words are perfectly understandable.",
+                    'good': "Your clarity is good, some letters can be improved.",
+                    'needs_work': "Clarity needs improvement. Focus on articulation."
+                },
+                'pace': {
+                    'excellent': "Your speaking pace is perfect for listening.",
+                    'good': "Pace is good, could use slight adjustment.", 
+                    'needs_work': "Pace needs improvement. Try slowing down or speeding up based on context."
+                },
+                'energy': {
+                    'excellent': "Your energy is contagious and maintains listener attention!",
+                    'good': "Energy is good, could be increased slightly.",
+                    'needs_work': "Energy is low. Try adding more vitality to your voice."
+                },
+                'confidence': {
+                    'excellent': "Your confidence is high and clearly shows in your voice!",
+                    'good': "Confidence is good, can be enhanced further.",
+                    'needs_work': "Confidence needs improvement. Practice speaking clearly."
+                },
+                'filler_words': {
+                    'excellent': "Excellent! No filler words used.",
+                    'good': "Good, you minimized filler words.", 
+                    'needs_work': "Try to reduce filler words like 'um', 'ah'."
+                }
+            }
+        }
+    
+    def analyze_audio(self, audio_path, task_id, language='ar'):
+        """Analyze audio recording and provide professional feedback"""
+        try:
+            # Basic audio analysis
+            duration = self.get_audio_duration(audio_path)
+            clarity_score = self.analyze_clarity(audio_path)
+            pace_score = self.analyze_pace(audio_path, duration)
+            energy_score = self.analyze_energy(audio_path)
+            filler_count = self.analyze_filler_words(audio_path, language)
+            
+            # Generate feedback
+            feedback = self.generate_feedback(
+                clarity_score, pace_score, energy_score, filler_count, 
+                task_id, language
+            )
+            
+            return {
+                'success': True,
+                'analysis': {
+                    'duration': duration,
+                    'clarity_score': clarity_score,
+                    'pace_score': pace_score, 
+                    'energy_score': energy_score,
+                    'filler_count': filler_count
+                },
+                'feedback': feedback,
+                'recommendations': self.generate_recommendations(
+                    clarity_score, pace_score, energy_score, filler_count, language
+                )
+            }
+            
+        except Exception as e:
+            logging.error(f"Audio analysis error: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def get_audio_duration(self, audio_path):
+        """Get audio duration in seconds"""
+        try:
+            with contextlib.closing(wave.open(audio_path, 'r')) as f:
+                frames = f.getnframes()
+                rate = f.getframerate()
+                return frames / float(rate)
+        except:
+            # Fallback for other audio formats
+            audio = AudioSegment.from_file(audio_path)
+            return len(audio) / 1000.0
+    
+    def analyze_clarity(self, audio_path):
+        """Analyze speech clarity (simplified version)"""
+        try:
+            # In a real implementation, this would use speech recognition
+            # and analyze word recognition confidence
+            with sr.AudioFile(audio_path) as source:
+                audio_data = self.recognizer.record(source)
+                try:
+                    text = self.recognizer.recognize_google(audio_data, language='ar-AR')
+                    # Simple clarity heuristic based on text length vs duration
+                    word_count = len(text.split())
+                    duration = self.get_audio_duration(audio_path)
+                    if duration > 0:
+                        words_per_minute = (word_count / duration) * 60
+                        # Ideal range for Arabic: 100-150 WPM
+                        if 100 <= words_per_minute <= 150:
+                            return 0.9  # Excellent
+                        elif 80 <= words_per_minute <= 180:
+                            return 0.7  # Good
+                        else:
+                            return 0.5  # Needs work
+                except sr.UnknownValueError:
+                    return 0.4  # Low clarity - speech not understood
+        except Exception as e:
+            logging.error(f"Clarity analysis error: {e}")
+            return 0.6  # Default average score
+    
+    def analyze_pace(self, audio_path, duration):
+        """Analyze speaking pace"""
+        try:
+            # Simple pace analysis based on pauses
+            audio = AudioSegment.from_file(audio_path)
+            chunks = np.array_split(np.array(audio.get_array_of_samples()), 100)
+            
+            # Calculate variance in amplitude (indicates pacing variations)
+            variances = [np.var(chunk) for chunk in chunks if len(chunk) > 0]
+            pace_variance = np.var(variances)
+            
+            if pace_variance < 0.1:
+                return 0.7  # Consistent pace
+            elif pace_variance < 0.3:
+                return 0.8  # Good variation
+            else:
+                return 0.6  # Too varied
+        except Exception as e:
+            logging.error(f"Pace analysis error: {e}")
+            return 0.7
+    
+    def analyze_energy(self, audio_path):
+        """Analyze vocal energy and enthusiasm"""
+        try:
+            audio = AudioSegment.from_file(audio_path)
+            dBFS = audio.dBFS
+            # Higher volume generally indicates more energy
+            if dBFS > -20:
+                return 0.9  # High energy
+            elif dBFS > -30:
+                return 0.7  # Moderate energy
+            else:
+                return 0.5  # Low energy
+        except Exception as e:
+            logging.error(f"Energy analysis error: {e}")
+            return 0.7
+    
+    def analyze_filler_words(self, audio_path, language):
+        """Count filler words (simplified detection)"""
+        try:
+            with sr.AudioFile(audio_path) as source:
+                audio_data = self.recognizer.record(source)
+                text = self.recognizer.recognize_google(audio_data, language='ar-AR' if language == 'ar' else 'en-US')
+                
+                # Common filler words in Arabic and English
+                filler_words_ar = ['امم', 'ااه', 'يعني', 'مثلا', 'طيب']
+                filler_words_en = ['um', 'uh', 'like', 'you know', 'so']
+                
+                fillers = filler_words_ar if language == 'ar' else filler_words_en
+                count = sum(text.lower().count(filler) for filler in fillers)
+                
+                return count
+        except Exception as e:
+            logging.error(f"Filler words analysis error: {e}")
+            return 0
+    
+    def generate_feedback(self, clarity, pace, energy, fillers, task_id, language):
+        """Generate professional feedback based on analysis"""
+        lang_data = self.professional_feedback[language]
+        
+        feedback = []
+        
+        # Clarity feedback
+        if clarity >= 0.8:
+            feedback.append(lang_data['clarity']['excellent'])
+        elif clarity >= 0.6:
+            feedback.append(lang_data['clarity']['good'])
+        else:
+            feedback.append(lang_data['clarity']['needs_work'])
+        
+        # Pace feedback
+        if pace >= 0.8:
+            feedback.append(lang_data['pace']['excellent'])
+        elif pace >= 0.6:
+            feedback.append(lang_data['pace']['good'])
+        else:
+            feedback.append(lang_data['pace']['needs_work'])
+        
+        # Energy feedback
+        if energy >= 0.8:
+            feedback.append(lang_data['energy']['excellent'])
+        elif energy >= 0.6:
+            feedback.append(lang_data['energy']['good'])
+        else:
+            feedback.append(lang_data['energy']['needs_work'])
+        
+        # Filler words feedback
+        if fillers == 0:
+            feedback.append(lang_data['filler_words']['excellent'])
+        elif fillers <= 2:
+            feedback.append(lang_data['filler_words']['good'])
+        else:
+            feedback.append(lang_data['filler_words']['needs_work'])
+        
+        return "\n\n".join(feedback)
+    
+    def generate_recommendations(self, clarity, pace, energy, fillers, language):
+        """Generate specific recommendations for improvement"""
+        recommendations = []
+        
+        if clarity < 0.7:
+            if language == 'ar':
+                recommendations.append("• تدرب على نطق الحروف بوضوح")
+                recommendations.append("• خذ وقتك في الكلام")
+            else:
+                recommendations.append("• Practice articulating letters clearly")
+                recommendations.append("• Take your time when speaking")
+        
+        if pace < 0.7:
+            if language == 'ar':
+                recommendations.append("• استخدم الوقفات بشكل استراتيجي")
+                recommendations.append("• عدل سرعتك حسب محتوى الكلام")
+            else:
+                recommendations.append("• Use pauses strategically")
+                recommendations.append("• Adjust your speed based on content")
+        
+        if energy < 0.7:
+            if language == 'ar':
+                recommendations.append("• تنفس بعمق قبل الكلام")
+                recommendations.append("• تخيل أنك تتحدث لجمهور كبير")
+            else:
+                recommendations.append("• Breathe deeply before speaking")
+                recommendations.append("• Imagine speaking to a large audience")
+        
+        if fillers > 2:
+            if language == 'ar':
+                recommendations.append("• استبدل كلمات الحشو بالوقفات")
+                recommendations.append("• تدرب على التفكير قبل الكلام")
+            else:
+                recommendations.append("• Replace filler words with pauses")
+                recommendations.append("• Practice thinking before speaking")
+        
+        return recommendations
+
+# Initialize audio analyzer
+audio_analyzer = AudioAnalyzer()
 
 # =============================================================================
 # DATABASE PERSISTENCE LAYER
@@ -88,6 +501,19 @@ class Database:
                 achievement_id TEXT,
                 unlocked_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (user_id, achievement_id)
+            )
+        ''')
+        
+        # Vocal tasks table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS vocal_tasks (
+                user_id INTEGER,
+                task_id INTEGER,
+                completed_at TEXT,
+                audio_file_path TEXT,
+                analysis_results TEXT,
+                feedback_received TEXT,
+                PRIMARY KEY (user_id, task_id)
             )
         ''')
         
@@ -328,6 +754,73 @@ class Database:
         cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
         conn.commit()
         conn.close()
+    
+    # VOCAL TASKS DATABASE METHODS
+    def save_vocal_task_completion(self, user_id, task_id, audio_path, analysis_results, feedback):
+        """Save vocal task completion data"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO vocal_tasks 
+            (user_id, task_id, completed_at, audio_file_path, analysis_results, feedback_received)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            task_id,
+            datetime.now().isoformat(),
+            audio_path,
+            json.dumps(analysis_results),
+            feedback
+        ))
+        
+        # Update user progress
+        cursor.execute('''
+            UPDATE user_progress 
+            SET recording_sessions = COALESCE(recording_sessions, 0) + 1,
+                updated_at = ?
+            WHERE user_id = ?
+        ''', (datetime.now().isoformat(), user_id))
+        
+        conn.commit()
+        conn.close()
+
+    def get_completed_vocal_tasks(self, user_id):
+        """Get list of completed vocal tasks for user"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT task_id, completed_at, analysis_results, feedback_received
+            FROM vocal_tasks 
+            WHERE user_id = ?
+            ORDER BY completed_at DESC
+        ''', (user_id,))
+        
+        results = cursor.fetchall()
+        tasks = []
+        
+        for result in results:
+            tasks.append({
+                'task_id': result[0],
+                'completed_at': result[1],
+                'analysis_results': json.loads(result[2]) if result[2] else {},
+                'feedback_received': result[3]
+            })
+        
+        conn.close()
+        return tasks
+
+    def get_vocal_task_completion_count(self, user_id):
+        """Get count of completed vocal tasks"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT COUNT(*) FROM vocal_tasks WHERE user_id = ?', (user_id,))
+        result = cursor.fetchone()
+        
+        conn.close()
+        return result[0] if result else 0
     
 # Initialize database
 db = Database()
@@ -2277,6 +2770,14 @@ ACHIEVEMENTS = {
         "description_en": "Complete all 15 days",
         "icon": "🎓",
         "condition": lambda user_data: len(user_data.get("completed_days", set())) >= 15
+    },
+    "vocal_master": {
+        "name_ar": "سيد الصوت",
+        "name_en": "Vocal Master",
+        "description_ar": "أكمل 5 مهام صوتية مختلفة",
+        "description_en": "Complete 5 different vocal tasks", 
+        "icon": "🎤",
+        "condition": lambda user_data: db.get_vocal_task_completion_count(user_data.get('user_id', 0)) >= 5
     }
 }
 
@@ -2565,6 +3066,10 @@ def format_progress_dashboard(user_id, language):
     total_exercises = sum(len(exercises) for exercises in progress.get("completed_exercises", {}).values())
     achievements = db.get_user_achievements(user_id)
     
+    # Get vocal tasks completion
+    vocal_tasks_completed = db.get_vocal_task_completion_count(user_id)
+    total_vocal_tasks = len(VOCAL_TASKS)
+    
     if language == 'ar':
         dashboard = f"""📊 **لوحة التقدم الشخصي**
 
@@ -2574,12 +3079,16 @@ def format_progress_dashboard(user_id, language):
 • نسبة الإنجاز: {(completed_days/total_days)*100:.1f}%
 • التمارين المكتملة: {total_exercises}
 
+🎤 **المهام الصوتية:**
+• المهام المكتملة: {vocal_tasks_completed}/{total_vocal_tasks}
+• نسبة الإنجاز: {(vocal_tasks_completed/total_vocal_tasks)*100:.1f}%
+
 🏆 **الإنجازات:**
 • تمارين الصوت المكتملة: {progress.get('completed_voice_exercises', 0)}
 • جلسات التنفس: {progress.get('breathing_sessions_completed', 0)}
 • تمارين سرد القصص: {progress.get('storytelling_exercises', 0)}
 • جلسات التسجيل: {progress.get('recording_sessions', 0)}
-• الإنجازات المكتسبة: {len(achievements)}/7
+• الإنجازات المكتسبة: {len(achievements)}/8
 
 🔥 **سلسلة الأيام المتتالية:** {progress.get('streak_count', 0)}
 
@@ -2593,12 +3102,16 @@ def format_progress_dashboard(user_id, language):
 • Completion Rate: {(completed_days/total_days)*100:.1f}%
 • Exercises Completed: {total_exercises}
 
+🎤 **Vocal Tasks:**
+• Tasks Completed: {vocal_tasks_completed}/{total_vocal_tasks}
+• Completion Rate: {(vocal_tasks_completed/total_vocal_tasks)*100:.1f}%
+
 🏆 **Achievements:**
 • Voice Exercises Completed: {progress.get('completed_voice_exercises', 0)}
 • Breathing Sessions: {progress.get('breathing_sessions_completed', 0)}
 • Storytelling Exercises: {progress.get('storytelling_exercises', 0)}
 • Recording Sessions: {progress.get('recording_sessions', 0)}
-• Achievements Unlocked: {len(achievements)}/7
+• Achievements Unlocked: {len(achievements)}/8
 
 🔥 **Current Streak:** {progress.get('streak_count', 0)} days
 
@@ -2819,12 +3332,13 @@ class ReminderSystem:
 # =============================================================================
 
 def create_main_keyboard(language):
-    """Create enhanced main keyboard with new features"""
+    """Create enhanced main keyboard with vocal tasks"""
     if language == 'ar':
         return {
             "inline_keyboard": [
                 [{"text": "📅 التدريب اليومي", "callback_data": "today"}],
                 [{"text": "📚 جميع الأيام", "callback_data": "all_days"}],
+                [{"text": "🎤 المهام الصوتية", "callback_data": "vocal_tasks"}],  # NEW
                 [{"text": "📊 لوحة التقدم", "callback_data": "dashboard"}],
                 [{"text": "❓ الاختبارات", "callback_data": "quizzes"}],
                 [{"text": "🏆 إنجازاتي", "callback_data": "achievements"}],
@@ -2838,6 +3352,7 @@ def create_main_keyboard(language):
             "inline_keyboard": [
                 [{"text": "📅 Today's Training", "callback_data": "today"}],
                 [{"text": "📚 All Days", "callback_data": "all_days"}],
+                [{"text": "🎤 Vocal Tasks", "callback_data": "vocal_tasks"}],  # NEW
                 [{"text": "📊 Progress Dashboard", "callback_data": "dashboard"}],
                 [{"text": "❓ Quizzes", "callback_data": "quizzes"}],
                 [{"text": "🏆 My Achievements", "callback_data": "achievements"}],
@@ -2846,6 +3361,27 @@ def create_main_keyboard(language):
                 [{"text": "🌐 العربية", "callback_data": "switch_language"}]
             ]
         }
+
+def create_vocal_tasks_keyboard(language):
+    """Create keyboard for vocal tasks"""
+    keyboard = []
+    
+    for task_id, task_data in VOCAL_TASKS.items():
+        task_name = task_data['task_ar'] if language == 'ar' else task_data['task_en']
+        keyboard.append([{
+            "text": f"🎤 {task_id}. {task_name}",
+            "callback_data": f"vocal_task_{task_id}"
+        }])
+    
+    # Add completion stats and back button
+    if language == 'ar':
+        keyboard.append([{"text": "📊 إحصائيات المهام", "callback_data": "vocal_stats"}])
+        keyboard.append([{"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}])
+    else:
+        keyboard.append([{"text": "📊 Task Statistics", "callback_data": "vocal_stats"}])
+        keyboard.append([{"text": "🏠 Main Menu", "callback_data": "main_menu"}])
+    
+    return {"inline_keyboard": keyboard}
 
 def create_settings_keyboard(language, user_id):
     """Create settings keyboard"""
@@ -2950,11 +3486,6 @@ def create_exercise_keyboard(day_num, exercise_num, exercise_type, language):
 class MessageHandler:
     def __init__(self, bot):
         self.bot = bot
-        # Import the helper functions
-        # from __main__ import can_access_day, update_streak, create_simple_day_completion
-        # self.can_access_day = can_access_day
-        # self.update_streak = update_streak
-        # self.create_simple_day_completion = create_simple_day_completion
         
     def get_user_language(self, user_id):
         preferences = db.get_user_preferences(user_id)
@@ -2981,6 +3512,7 @@ class MessageHandler:
 • 🏆 نظام الإنجازات
 • 💨 تمارين التنفس
 • 🎤 تتبع التمارين الصوتية
+• 🎙️ مهام تسجيل صوتي مع تحليل احترافي
 
 اختر من القائمة أدناه لبدء رحلتك! 🚀""",
             f"""🎓 **Welcome to Zain Training Bot!**
@@ -2995,6 +3527,7 @@ This intensive 15-day program will guide you toward professionalism in audio bro
 • 🏆 Achievement system
 • 💨 Breathing exercises
 • 🎤 Vocal exercise tracking
+• 🎙️ Voice recording tasks with professional analysis
 
 Choose from the menu below to start your journey! 🚀"""
         )
@@ -3019,12 +3552,248 @@ Choose from the menu below to start your journey! 🚀"""
             self.send_day_content(chat_id, user_id, current_day)
         elif text == "/breathing":
             self.send_breathing_exercise(chat_id, user_id)
+        elif text == "/vocal" or text == "/record":
+            self.show_vocal_tasks_menu(chat_id, user_id)
         else:
             help_text = self.get_text(user_id,
                 "👋 استخدم /menu للوصول إلى القائمة الرئيسية والتعرف على جميع الميزات المتاحة!",
                 "👋 Use /menu to access the main menu and discover all available features!"
             )
             self.bot.send_message(chat_id, help_text)
+    
+    def handle_voice_message(self, chat_id, user_id, voice_message):
+        """Handle incoming voice messages for vocal tasks"""
+        try:
+            language = self.get_user_language(user_id)
+            
+            # Check if user is in vocal task mode
+            progress = db.get_user_progress(user_id)
+            current_vocal_task = progress.get('current_vocal_task') if progress else None
+            
+            if not current_vocal_task:
+                # Not in vocal task mode
+                if language == 'ar':
+                    message = "🎤 لإرسال تسجيل صوتي، يرجى البدء بمهمة صوتية أولاً من خلال 'المهام الصوتية' في القائمة الرئيسية."
+                else:
+                    message = "🎤 To send a voice recording, please start a vocal task first through 'Vocal Tasks' in the main menu."
+                self.bot.send_message(chat_id, message)
+                return
+            
+            # Download and process voice message
+            task_id = current_vocal_task
+            analysis_result = self.process_voice_task(user_id, voice_message, task_id, language)
+            
+            if analysis_result['success']:
+                self.send_vocal_feedback(chat_id, user_id, task_id, analysis_result, language)
+            else:
+                error_msg = self.get_text(user_id,
+                    "❌ حدث خطأ في تحليل التسجيل. يرجى المحاولة مرة أخرى.",
+                    "❌ Error analyzing recording. Please try again."
+                )
+                self.bot.send_message(chat_id, error_msg)
+                
+        except Exception as e:
+            logging.error(f"Error handling voice message: {e}")
+            error_msg = self.get_text(user_id,
+                "❌ حدث خطأ في معالجة التسجيل.",
+                "❌ Error processing recording."
+            )
+            self.bot.send_message(chat_id, error_msg)
+
+    def process_voice_task(self, user_id, voice_message, task_id, language):
+        """Process voice recording and return analysis"""
+        try:
+            # Download voice file
+            file_id = voice_message['file_id']
+            file_info = requests.get(f"https://api.telegram.org/bot{self.bot.token}/getFile?file_id={file_id}").json()
+            file_path = file_info['result']['file_path']
+            file_url = f"https://api.telegram.org/file/bot{self.bot.token}/{file_path}"
+            
+            # Download and save temporarily
+            response = requests.get(file_url)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.ogg') as temp_file:
+                temp_file.write(response.content)
+                temp_path = temp_file.name
+            
+            # Convert to WAV for analysis
+            wav_path = temp_path.replace('.ogg', '.wav')
+            audio = AudioSegment.from_ogg(temp_path)
+            audio.export(wav_path, format='wav')
+            
+            # Analyze audio
+            analysis_result = audio_analyzer.analyze_audio(wav_path, task_id, language)
+            
+            # Clean up temp files
+            os.unlink(temp_path)
+            os.unlink(wav_path)
+            
+            return analysis_result
+            
+        except Exception as e:
+            logging.error(f"Error processing voice task: {e}")
+            return {'success': False, 'error': str(e)}
+
+    def send_vocal_feedback(self, chat_id, user_id, task_id, analysis_result, language):
+        """Send comprehensive feedback for vocal task"""
+        task_data = VOCAL_TASKS.get(task_id, {})
+        task_name = task_data.get('task_ar', '') if language == 'ar' else task_data.get('task_en', '')
+        
+        # Save completion to database
+        db.save_vocal_task_completion(
+            user_id, 
+            task_id, 
+            "telegram_voice",  # We don't store the actual file
+            analysis_result['analysis'],
+            analysis_result['feedback']
+        )
+        
+        # Prepare feedback message
+        if language == 'ar':
+            message = f"🎤 **تحليل المهمة الصوتية: {task_name}**\n\n"
+            message += "📊 **نتائج التحليل:**\n"
+            message += f"• المدة: {analysis_result['analysis']['duration']:.1f} ثانية\n"
+            message += f"• الوضوح: {analysis_result['analysis']['clarity_score']*100:.0f}%\n"
+            message += f"• السرعة: {analysis_result['analysis']['pace_score']*100:.0f}%\n"
+            message += f"• الطاقة: {analysis_result['analysis']['energy_score']*100:.0f}%\n"
+            message += f"• كلمات الحشو: {analysis_result['analysis']['filler_count']}\n\n"
+            message += "💡 **التغذية الراجعة:**\n"
+            message += analysis_result['feedback'] + "\n\n"
+            message += "🚀 **التوصيات:**\n"
+            for rec in analysis_result.get('recommendations', []):
+                message += f"{rec}\n"
+        else:
+            message = f"🎤 **Vocal Task Analysis: {task_name}**\n\n"
+            message += "📊 **Analysis Results:**\n"
+            message += f"• Duration: {analysis_result['analysis']['duration']:.1f} seconds\n"
+            message += f"• Clarity: {analysis_result['analysis']['clarity_score']*100:.0f}%\n"
+            message += f"• Pace: {analysis_result['analysis']['pace_score']*100:.0f}%\n"
+            message += f"• Energy: {analysis_result['analysis']['energy_score']*100:.0f}%\n"
+            message += f"• Filler Words: {analysis_result['analysis']['filler_count']}\n\n"
+            message += "💡 **Feedback:**\n"
+            message += analysis_result['feedback'] + "\n\n"
+            message += "🚀 **Recommendations:**\n"
+            for rec in analysis_result.get('recommendations', []):
+                message += f"{rec}\n"
+        
+        # Clear current vocal task
+        progress = db.get_user_progress(user_id)
+        if progress and 'current_vocal_task' in progress:
+            del progress['current_vocal_task']
+            db.save_user_progress(user_id, progress)
+        
+        # Send feedback
+        self.bot.send_message(chat_id, message)
+        
+        # Check for achievements
+        new_achievements = check_and_unlock_achievements(user_id)
+        if new_achievements:
+            send_achievement_notification(self.bot, user_id, new_achievements)
+
+    def show_vocal_tasks_menu(self, chat_id, user_id):
+        """Show vocal tasks menu"""
+        language = self.get_user_language(user_id)
+        
+        if language == 'ar':
+            message = "🎤 **المهام الصوتية**\n\nاختر مهمة للتدرب عليها:"
+        else:
+            message = "🎤 **Vocal Tasks**\n\nChoose a task to practice:"
+        
+        keyboard = create_vocal_tasks_keyboard(language)
+        self.bot.send_message(chat_id, message, keyboard)
+
+    def show_vocal_task_details(self, chat_id, user_id, task_id):
+        """Show details for a specific vocal task"""
+        task_data = VOCAL_TASKS.get(task_id)
+        if not task_data:
+            error_msg = self.get_text(user_id, "❌ المهمة غير موجودة", "❌ Task not found")
+            self.bot.send_message(chat_id, error_msg)
+            return
+        
+        language = self.get_user_language(user_id)
+        
+        task_name = task_data['task_ar'] if language == 'ar' else task_data['task_en']
+        description = task_data['description_ar'] if language == 'ar' else task_data['description_en']
+        
+        if language == 'ar':
+            message = f"🎤 **{task_name}**\n\n"
+            message += f"📝 **الوصف:**\n{description}\n\n"
+            message += "🎯 **معايير التقييم:**\n"
+            for criterion, desc in task_data['evaluation_criteria'].items():
+                message += f"• {desc}\n"
+            message += "\n⏰ **المدة المقترحة:** 1-3 دقائق\n"
+            message += "\n🎙️ **إرسل تسجيلك الصوتي الآن!**"
+        else:
+            message = f"🎤 **{task_name}**\n\n"
+            message += f"📝 **Description:**\n{description}\n\n"
+            message += "🎯 **Evaluation Criteria:**\n"
+            for criterion, desc in task_data['evaluation_criteria'].items():
+                message += f"• {desc}\n"
+            message += "\n⏰ **Suggested Duration:** 1-3 minutes\n"
+            message += "\n🎙️ **Send your voice recording now!**"
+        
+        # Set current vocal task
+        progress = db.get_user_progress(user_id)
+        if not progress:
+            initialize_user_progress(user_id)
+            progress = db.get_user_progress(user_id)
+        
+        progress['current_vocal_task'] = task_id
+        db.save_user_progress(user_id, progress)
+        
+        # Create keyboard
+        if language == 'ar':
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "📋 عرض المهام الأخرى", "callback_data": "vocal_tasks"}],
+                    [{"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}]
+                ]
+            }
+        else:
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "📋 View Other Tasks", "callback_data": "vocal_tasks"}],
+                    [{"text": "🏠 Main Menu", "callback_data": "main_menu"}]
+                ]
+            }
+        
+        self.bot.send_message(chat_id, message, keyboard)
+
+    def show_vocal_stats(self, chat_id, user_id):
+        """Show vocal tasks statistics"""
+        completed_tasks = db.get_completed_vocal_tasks(user_id)
+        total_completed = len(completed_tasks)
+        total_tasks = len(VOCAL_TASKS)
+        
+        language = self.get_user_language(user_id)
+        
+        if language == 'ar':
+            message = f"📊 **إحصائيات المهام الصوتية**\n\n"
+            message += f"• المهام المكتملة: {total_completed}/{total_tasks}\n"
+            message += f"• نسبة الإنجاز: {(total_completed/total_tasks)*100:.1f}%\n\n"
+            
+            if completed_tasks:
+                message += "✅ **المهام المكتملة:**\n"
+                for task in completed_tasks[:5]:  # Show last 5 tasks
+                    task_data = VOCAL_TASKS.get(task['task_id'], {})
+                    task_name = task_data.get('task_ar', f'المهمة {task["task_id"]}')
+                    message += f"• {task_name}\n"
+            else:
+                message += "💡 لم تكمل أي مهمة صوتية بعد. ابدأ بالتدرب الآن! 🎤"
+        else:
+            message = f"📊 **Vocal Tasks Statistics**\n\n"
+            message += f"• Completed Tasks: {total_completed}/{total_tasks}\n"
+            message += f"• Completion Rate: {(total_completed/total_tasks)*100:.1f}%\n\n"
+            
+            if completed_tasks:
+                message += "✅ **Completed Tasks:**\n"
+                for task in completed_tasks[:5]:
+                    task_data = VOCAL_TASKS.get(task['task_id'], {})
+                    task_name = task_data.get('task_en', f'Task {task["task_id"]}')
+                    message += f"• {task_name}\n"
+            else:
+                message += "💡 You haven't completed any vocal tasks yet. Start practicing now! 🎤"
+        
+        self.bot.send_message(chat_id, message)
     
     def handle_callback(self, chat_id, user_id, data, callback_query_id=None):
         logging.info(f"📱 Callback received: {data} from user {user_id}")
@@ -3276,6 +4045,17 @@ Choose from the menu below to start your journey! 🚀"""
                 
                 # Start the quiz
                 self.start_quiz(chat_id, user_id, day_num)
+            
+            # VOCAL TASKS HANDLERS
+            elif data == "vocal_tasks":
+                self.show_vocal_tasks_menu(chat_id, user_id)
+            
+            elif data.startswith("vocal_task_"):
+                task_id = int(data.split("_")[2])
+                self.show_vocal_task_details(chat_id, user_id, task_id)
+            
+            elif data == "vocal_stats":
+                self.show_vocal_stats(chat_id, user_id)
         
         except Exception as e:
             logging.error(f"Error handling callback: {e}")
@@ -3595,7 +4375,7 @@ def home():
             <div class="container">
                 <h1>🎓 Zain Training Bot</h1>
                 <p class="status">✅ Bot is running successfully!</p>
-                <p>Enhanced with database persistence and webhooks.</p>
+                <p>Enhanced with database persistence, webhooks, and vocal recording analysis.</p>
                 <p><strong>Features:</strong></p>
                 <ul style="text-align: left; display: inline-block;">
                     <li>15 days of comprehensive training</li>
@@ -3604,7 +4384,8 @@ def home():
                     <li>Progress tracking with database</li>
                     <li>Achievement system</li>
                     <li>Exercise completion tracking</li>
-                    <li>Vocal recording tasks</li>
+                    <li>Vocal recording tasks with AI analysis</li>
+                    <li>Professional voice feedback</li>
                     <li>Breathing exercises</li>
                     <li>Webhook-based (no polling)</li>
                 </ul>
@@ -3632,13 +4413,17 @@ def webhook():
                 if 'text' in message:
                     text = message['text']
                     message_handler.handle_message(chat_id, user_id, text)
+                elif 'voice' in message:
+                    # Handle voice messages for vocal tasks
+                    voice_message = message['voice']
+                    message_handler.handle_voice_message(chat_id, user_id, voice_message)
             
             elif 'callback_query' in update:
                 callback_query = update['callback_query']
                 chat_id = callback_query['message']['chat']['id']
                 user_id = callback_query['from']['id']
                 data = callback_query['data']
-                callback_query_id = callback_query['id']  # ← ADD THIS
+                callback_query_id = callback_query['id']
                 
                 # Answer callback query first
                 bot.answer_callback_query(callback_query_id)
