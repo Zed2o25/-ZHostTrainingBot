@@ -660,10 +660,12 @@ class Database:
         except Exception as e:
             logging.error(f"Error saving user preferences for {user_id}: {e}")
 
-    # Add other database methods as needed
-
+    # =============================================================================
+    # ADD THESE MISSING METHODS - PROPERLY INDENTED
+    # =============================================================================
+    
     def save_vocal_task_completion(self, user_id, task_id, audio_file_path=None, analysis_results=None, feedback_received=None):
-    """Save vocal task completion to PostgreSQL"""
+        """Save vocal task completion to PostgreSQL"""
         try:
             self.execute_query('''
                 INSERT INTO vocal_tasks 
@@ -687,7 +689,7 @@ class Database:
             
         except Exception as e:
             logging.error(f"Error saving vocal task for {user_id}: {e}")
-    
+
     def get_completed_vocal_tasks(self, user_id):
         """Get completed vocal tasks for a user"""
         try:
@@ -703,7 +705,7 @@ class Database:
         except Exception as e:
             logging.error(f"Error getting completed vocal tasks for {user_id}: {e}")
             return []
-    
+
     def get_vocal_task_completion_count(self, user_id):
         """Get count of completed vocal tasks for a user"""
         try:
@@ -718,7 +720,7 @@ class Database:
         except Exception as e:
             logging.error(f"Error getting vocal task count for {user_id}: {e}")
             return 0
-    
+
     def save_user_achievement(self, user_id, achievement_id):
         """Save user achievement to database"""
         try:
@@ -732,7 +734,7 @@ class Database:
             
         except Exception as e:
             logging.error(f"Error saving achievement for {user_id}: {e}")
-    
+
     def get_user_achievements(self, user_id):
         """Get user's unlocked achievements"""
         try:
@@ -747,7 +749,7 @@ class Database:
         except Exception as e:
             logging.error(f"Error getting achievements for {user_id}: {e}")
             return []
-    
+
     def save_quiz_state(self, user_id, quiz_state):
         """Save quiz state to database"""
         try:
@@ -773,7 +775,7 @@ class Database:
             
         except Exception as e:
             logging.error(f"Error saving quiz state for {user_id}: {e}")
-    
+
     def get_quiz_state(self, user_id):
         """Get quiz state from database"""
         try:
@@ -792,7 +794,7 @@ class Database:
         except Exception as e:
             logging.error(f"Error getting quiz state for {user_id}: {e}")
             return None
-    
+
     def delete_quiz_state(self, user_id):
         """Delete quiz state from database"""
         try:
@@ -803,7 +805,7 @@ class Database:
             
         except Exception as e:
             logging.error(f"Error deleting quiz state for {user_id}: {e}")
-    
+
     def get_all_users_with_preferences(self, preference_type):
         """Get all users who have specific preference enabled"""
         try:
@@ -815,7 +817,8 @@ class Database:
         except Exception as e:
             logging.error(f"Error getting users with preferences: {e}")
             return []
-# Initialize database
+
+# Initialize database - THIS STAYS OUTSIDE THE CLASS
 db = Database()
 
 # =============================================================================
