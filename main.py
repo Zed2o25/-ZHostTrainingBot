@@ -1,5 +1,4 @@
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import pg8000
 import os
 import logging
 import sys
@@ -388,13 +387,29 @@ class Database:
         self.init_db()
     
     def get_connection(self):
-        """Get PostgreSQL connection with SSL"""
-        return psycopg2.connect(self.db_url, sslmode='require')
+        """Get PostgreSQL connection using pg8000"""
+        # Parse the database URL
+        if self.db_url.startswith('postgresql://'):
+            url_parts = self.db_url.replace('postgresql://', '').split('@')
+            user_pass = url_parts[0].split(':')
+            host_db = url_parts[1].split('/')
+            host_port = host_db[0].split(':')
+            
+            return pg8000.connect(
+                user=user_pass[0],
+                password=user_pass[1],
+                host=host_port[0],
+                port=int(host_port[1]) if len(host_port) > 1 else 5432,
+                database=host_db[1]
+            )
+        else:
+            # Fallback for other URL formats
+            return pg8000.connect(self.db_url)
     
     def execute_query(self, query, params=None, fetch=False, fetch_one=False):
         """Execute query with proper error handling"""
         conn = self.get_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
         
         try:
             if params:
@@ -404,8 +419,17 @@ class Database:
             
             if fetch_one:
                 result = cursor.fetchone()
+                if result:
+                    # Convert to dictionary with column names
+                    columns = [desc[0] for desc in cursor.description]
+                    result = dict(zip(columns, result))
             elif fetch:
-                result = cursor.fetchall()
+                results = cursor.fetchall()
+                if results:
+                    columns = [desc[0] for desc in cursor.description]
+                    result = [dict(zip(columns, row)) for row in results]
+                else:
+                    result = []
             else:
                 result = None
             
@@ -423,7 +447,7 @@ class Database:
     def init_db(self):
         """Initialize PostgreSQL database tables"""
         try:
-            logging.info("🔄 Initializing PostgreSQL database...")
+            logging.info("🔄 Initializing PostgreSQL database with pg8000...")
             
             # User progress table
             self.execute_query('''
@@ -498,7 +522,7 @@ class Database:
                 )
             ''')
             
-            logging.info("✅ PostgreSQL database initialized successfully")
+            logging.info("✅ PostgreSQL database initialized successfully with pg8000")
             
         except Exception as e:
             logging.error(f"❌ Database initialization error: {e}")
@@ -634,9 +658,8 @@ class Database:
             
         except Exception as e:
             logging.error(f"Error saving user preferences for {user_id}: {e}")
-    
-    # Add other database methods (get_user_achievements, save_user_achievement, etc.)
-    # following the same pattern...
+
+    # Add other database methods as needed...
     
 # Initialize database
 db = Database()
