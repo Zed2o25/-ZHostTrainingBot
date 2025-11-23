@@ -3013,9 +3013,11 @@ Choose from the menu below to start your journey! 🚀"""
     
     def handle_callback(self, chat_id, user_id, data, callback_query_id=None):
         logging.info(f"📱 Callback received: {data} from user {user_id}")
+        
         # Answer callback query first if ID is provided
         if callback_query_id:
             self.bot.answer_callback_query(callback_query_id)
+        
         try:
             if data == "main_menu":
                 menu_text = self.get_text(user_id,
@@ -3070,7 +3072,7 @@ Choose from the menu below to start your journey! 🚀"""
                     # Send achievement notifications if any
                     if new_achievements:
                         send_achievement_notification(self.bot, user_id, new_achievements)
-                
+            
             elif data == "today":
                 progress = db.get_user_progress(user_id)
                 current_day = progress.get("current_day", 1) if progress else 1
@@ -3193,33 +3195,28 @@ Choose from the menu below to start your journey! 🚀"""
                     
                     logging.info("📤 Sending confirmation message")
                     self.bot.send_message(chat_id, confirm_text)
-        
-        # Refresh the day view to show updated status
-        logging.info("🔄 Refreshing day content view")
-        self.send_day_content(chat_id, user_id, day_num)
-        logging.info("✅ Complete_day process finished successfully")
+                    
+                    # Refresh the day view to show updated status
+                    logging.info("🔄 Refreshing day content view")
+                    self.send_day_content(chat_id, user_id, day_num)
+                    logging.info("✅ Complete_day process finished successfully")
+                        
+                except Exception as e:
+                    logging.error(f"❌ Error in complete_day handler: {e}", exc_info=True)
+                    # Log additional debug info
+                    logging.error(f"🔍 Debug info - user_id: {user_id}, day_num: {day_num}")
+                    try:
+                        progress = db.get_user_progress(user_id)
+                        logging.error(f"🔍 Progress object: {progress}")
+                        if progress:
+                            logging.error(f"🔍 completed_days type: {type(progress.get('completed_days'))}")
+                            logging.error(f"🔍 completed_days value: {progress.get('completed_days')}")
+                    except Exception as debug_error:
+                        logging.error(f"🔍 Debug error: {debug_error}")
+                    
+                    error_text = self.get_text(user_id, "❌ حدث خطأ في إكمال اليوم", "❌ Error completing day")
+                    self.bot.send_message(chat_id, error_text)
             
-    except Exception as e:
-        logging.error(f"❌ Error in complete_day handler: {e}", exc_info=True)
-        # Log additional debug info
-        logging.error(f"🔍 Debug info - user_id: {user_id}, day_num: {day_num}")
-        try:
-            progress = db.get_user_progress(user_id)
-            logging.error(f"🔍 Progress object: {progress}")
-            if progress:
-                logging.error(f"🔍 completed_days type: {type(progress.get('completed_days'))}")
-                logging.error(f"🔍 completed_days value: {progress.get('completed_days')}")
-        except Exception as debug_error:
-            logging.error(f"🔍 Debug error: {debug_error}")
-        
-        error_text = self.get_text(user_id, "❌ حدث خطأ في إكمال اليوم", "❌ Error completing day")
-        self.bot.send_message(chat_id, error_text)
-                
-                # Check for achievements
-                # new_achievements = check_and_unlock_achievements(user_id)
-                # if new_achievements:
-                #   send_achievement_notification(self.bot, user_id, new_achievements)
-                            
             elif data.startswith("complete_task_"):
                 parts = data.split("_")
                 day_num = int(parts[2])
@@ -3264,6 +3261,7 @@ Choose from the menu below to start your journey! 🚀"""
                 
                 # Start the quiz
                 self.start_quiz(chat_id, user_id, day_num)
+        
         except Exception as e:
             logging.error(f"Error handling callback: {e}")
             error_text = self.get_text(user_id, "❌ حدث خطأ", "❌ An error occurred")
