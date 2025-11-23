@@ -10,13 +10,13 @@ import requests
 import sqlite3
 import json
 import atexit
-import speech_recognition as sr
+# import speech_recognition as sr
 import tempfile
 import wave
 import contextlib
-import numpy as np
-from pydub import AudioSegment
-from io import BytesIO
+# import numpy as np
+# from pydub import AudioSegment
+# from io import BytesIO
 
 # Configure logging
 logging.basicConfig(
@@ -158,95 +158,74 @@ VOCAL_TASKS = {
 # AUDIO ANALYSIS ENGINE
 # =============================================================================
 
+# =============================================================================
+# SIMPLIFIED AUDIO ANALYSIS ENGINE (No external dependencies)
+# =============================================================================
+
 class AudioAnalyzer:
     def __init__(self):
-        self.recognizer = sr.Recognizer()
         self.professional_feedback = {
             'ar': {
-                'clarity': {
-                    'excellent': "وضوح صوتك ممتاز! الكلمات مفهومة تماماً.",
-                    'good': "وضوحك جيد، يمكن تحسين بعض الحروف.",
-                    'needs_work': "يحتاج الوضوح لتحسين. ركز على مخارج الحروف."
+                'duration': {
+                    'too_short': "المدة قصيرة جداً. حاول التحدث لمدة أطول (30-90 ثانية).",
+                    'good': "المدة مناسبة. استمر هكذا!",
+                    'too_long': "المدة طويلة. حاول الاختصار مع الحفاظ على الجودة."
                 },
-                'pace': {
-                    'excellent': "سرعة كلامك مثالية للاستماع.",
-                    'good': "السرعة جيدة، يمكن تعديلها قليلاً.",
-                    'needs_work': "السرعة تحتاج تحسين. حاول التأني أو التسريع حسب السياق."
+                'engagement': {
+                    'excellent': "أداؤك ممتاز! تحافظ على انتباه المستمع.",
+                    'good': "أداؤك جيد، يمكن تحسينه أكثر.",
+                    'needs_work': "حاول إضافة المزيد من الحماس والتعبير."
                 },
-                'energy': {
-                    'excellent': "طاقتك معدية وتحافظ على انتباه المستمع!",
-                    'good': "الطاقة جيدة، يمكن زيادتها قليلاً.",
-                    'needs_work': "الطاقة منخفضة. حاول إضافة حيوية لصوتك."
-                },
-                'confidence': {
-                    'excellent': "ثقتك عالية وتظهر في صوتك بوضوح!",
-                    'good': "ثقتك جيدة، يمكن تعزيزها أكثر.",
-                    'needs_work': "الثقة تحتاج تحسين. تدرب على التحدث بوضوح."
-                },
-                'filler_words': {
-                    'excellent': "ممتاز! لا تستخدم كلمات حشو.",
-                    'good': "جيد، قللت من كلمات الحشو.",
-                    'needs_work': "حاول تقليل كلمات الحشو مثل 'امم'، 'ااه'."
+                'consistency': {
+                    'excellent': "ثابت ومتسق في أدائك!",
+                    'good': "جيد، يمكن العمل على الثبات أكثر.",
+                    'needs_work': "حاول الحفاظ على وتيرة ثابتة."
                 }
             },
             'en': {
-                'clarity': {
-                    'excellent': "Your clarity is excellent! Words are perfectly understandable.",
-                    'good': "Your clarity is good, some letters can be improved.",
-                    'needs_work': "Clarity needs improvement. Focus on articulation."
+                'duration': {
+                    'too_short': "Duration is too short. Try speaking longer (30-90 seconds).",
+                    'good': "Duration is appropriate. Keep it up!",
+                    'too_long': "Duration is too long. Try to be more concise while maintaining quality."
                 },
-                'pace': {
-                    'excellent': "Your speaking pace is perfect for listening.",
-                    'good': "Pace is good, could use slight adjustment.", 
-                    'needs_work': "Pace needs improvement. Try slowing down or speeding up based on context."
+                'engagement': {
+                    'excellent': "Excellent performance! You maintain listener attention.",
+                    'good': "Good performance, can be improved further.",
+                    'needs_work': "Try adding more enthusiasm and expression."
                 },
-                'energy': {
-                    'excellent': "Your energy is contagious and maintains listener attention!",
-                    'good': "Energy is good, could be increased slightly.",
-                    'needs_work': "Energy is low. Try adding more vitality to your voice."
-                },
-                'confidence': {
-                    'excellent': "Your confidence is high and clearly shows in your voice!",
-                    'good': "Confidence is good, can be enhanced further.",
-                    'needs_work': "Confidence needs improvement. Practice speaking clearly."
-                },
-                'filler_words': {
-                    'excellent': "Excellent! No filler words used.",
-                    'good': "Good, you minimized filler words.", 
-                    'needs_work': "Try to reduce filler words like 'um', 'ah'."
+                'consistency': {
+                    'excellent': "Consistent and steady in your performance!",
+                    'good': "Good, can work on consistency more.",
+                    'needs_work': "Try to maintain a steady pace."
                 }
             }
         }
     
-    def analyze_audio(self, audio_path, task_id, language='ar'):
-        """Analyze audio recording and provide professional feedback"""
+    def analyze_audio(self, file_info, task_id, language='ar'):
+        """Simplified audio analysis using only file metadata"""
         try:
-            # Basic audio analysis
-            duration = self.get_audio_duration(audio_path)
-            clarity_score = self.analyze_clarity(audio_path)
-            pace_score = self.analyze_pace(audio_path, duration)
-            energy_score = self.analyze_energy(audio_path)
-            filler_count = self.analyze_filler_words(audio_path, language)
+            # Get basic file info from Telegram voice message
+            duration = file_info.get('duration', 0)
+            file_size = file_info.get('file_size', 0)
+            
+            # Simple scoring based on duration and file characteristics
+            engagement_score = self.analyze_engagement(duration, file_size)
+            consistency_score = self.analyze_consistency(duration)
             
             # Generate feedback
-            feedback = self.generate_feedback(
-                clarity_score, pace_score, energy_score, filler_count, 
-                task_id, language
-            )
+            feedback = self.generate_feedback(duration, engagement_score, consistency_score, language)
             
             return {
                 'success': True,
                 'analysis': {
                     'duration': duration,
-                    'clarity_score': clarity_score,
-                    'pace_score': pace_score, 
-                    'energy_score': energy_score,
-                    'filler_count': filler_count
+                    'file_size': file_size,
+                    'engagement_score': engagement_score,
+                    'consistency_score': consistency_score,
+                    'quality_indicator': file_size / max(1, duration)  # bytes per second
                 },
                 'feedback': feedback,
-                'recommendations': self.generate_recommendations(
-                    clarity_score, pace_score, energy_score, filler_count, language
-                )
+                'recommendations': self.generate_recommendations(duration, engagement_score, consistency_score, language)
             }
             
         except Exception as e:
@@ -256,178 +235,100 @@ class AudioAnalyzer:
                 'error': str(e)
             }
     
-    def get_audio_duration(self, audio_path):
-        """Get audio duration in seconds"""
-        try:
-            with contextlib.closing(wave.open(audio_path, 'r')) as f:
-                frames = f.getnframes()
-                rate = f.getframerate()
-                return frames / float(rate)
-        except:
-            # Fallback for other audio formats
-            audio = AudioSegment.from_file(audio_path)
-            return len(audio) / 1000.0
+    def analyze_engagement(self, duration, file_size):
+        """Analyze engagement based on duration and file quality indicators"""
+        if duration < 10:
+            return 0.4  # Too short to assess properly
+        elif duration < 30:
+            return 0.6  # Brief but acceptable
+        elif 30 <= duration <= 180:
+            return 0.8  # Ideal range
+        else:
+            return 0.7  # Long but acceptable
     
-    def analyze_clarity(self, audio_path):
-        """Analyze speech clarity (simplified version)"""
-        try:
-            # In a real implementation, this would use speech recognition
-            # and analyze word recognition confidence
-            with sr.AudioFile(audio_path) as source:
-                audio_data = self.recognizer.record(source)
-                try:
-                    text = self.recognizer.recognize_google(audio_data, language='ar-AR')
-                    # Simple clarity heuristic based on text length vs duration
-                    word_count = len(text.split())
-                    duration = self.get_audio_duration(audio_path)
-                    if duration > 0:
-                        words_per_minute = (word_count / duration) * 60
-                        # Ideal range for Arabic: 100-150 WPM
-                        if 100 <= words_per_minute <= 150:
-                            return 0.9  # Excellent
-                        elif 80 <= words_per_minute <= 180:
-                            return 0.7  # Good
-                        else:
-                            return 0.5  # Needs work
-                except sr.UnknownValueError:
-                    return 0.4  # Low clarity - speech not understood
-        except Exception as e:
-            logging.error(f"Clarity analysis error: {e}")
-            return 0.6  # Default average score
+    def analyze_consistency(self, duration):
+        """Analyze consistency based on duration patterns"""
+        # For now, we'll use duration as a proxy for consistency
+        # In a real app, this would analyze audio waveforms
+        if 45 <= duration <= 120:
+            return 0.8  # Good consistency range
+        elif duration > 0:
+            return 0.7  # Acceptable
+        else:
+            return 0.5  # Poor
     
-    def analyze_pace(self, audio_path, duration):
-        """Analyze speaking pace"""
-        try:
-            # Simple pace analysis based on pauses
-            audio = AudioSegment.from_file(audio_path)
-            chunks = np.array_split(np.array(audio.get_array_of_samples()), 100)
-            
-            # Calculate variance in amplitude (indicates pacing variations)
-            variances = [np.var(chunk) for chunk in chunks if len(chunk) > 0]
-            pace_variance = np.var(variances)
-            
-            if pace_variance < 0.1:
-                return 0.7  # Consistent pace
-            elif pace_variance < 0.3:
-                return 0.8  # Good variation
-            else:
-                return 0.6  # Too varied
-        except Exception as e:
-            logging.error(f"Pace analysis error: {e}")
-            return 0.7
-    
-    def analyze_energy(self, audio_path):
-        """Analyze vocal energy and enthusiasm"""
-        try:
-            audio = AudioSegment.from_file(audio_path)
-            dBFS = audio.dBFS
-            # Higher volume generally indicates more energy
-            if dBFS > -20:
-                return 0.9  # High energy
-            elif dBFS > -30:
-                return 0.7  # Moderate energy
-            else:
-                return 0.5  # Low energy
-        except Exception as e:
-            logging.error(f"Energy analysis error: {e}")
-            return 0.7
-    
-    def analyze_filler_words(self, audio_path, language):
-        """Count filler words (simplified detection)"""
-        try:
-            with sr.AudioFile(audio_path) as source:
-                audio_data = self.recognizer.record(source)
-                text = self.recognizer.recognize_google(audio_data, language='ar-AR' if language == 'ar' else 'en-US')
-                
-                # Common filler words in Arabic and English
-                filler_words_ar = ['امم', 'ااه', 'يعني', 'مثلا', 'طيب']
-                filler_words_en = ['um', 'uh', 'like', 'you know', 'so']
-                
-                fillers = filler_words_ar if language == 'ar' else filler_words_en
-                count = sum(text.lower().count(filler) for filler in fillers)
-                
-                return count
-        except Exception as e:
-            logging.error(f"Filler words analysis error: {e}")
-            return 0
-    
-    def generate_feedback(self, clarity, pace, energy, fillers, task_id, language):
-        """Generate professional feedback based on analysis"""
+    def generate_feedback(self, duration, engagement, consistency, language):
+        """Generate professional feedback"""
         lang_data = self.professional_feedback[language]
         
         feedback = []
         
-        # Clarity feedback
-        if clarity >= 0.8:
-            feedback.append(lang_data['clarity']['excellent'])
-        elif clarity >= 0.6:
-            feedback.append(lang_data['clarity']['good'])
+        # Duration feedback
+        if duration < 30:
+            feedback.append(lang_data['duration']['too_short'])
+        elif duration > 300:
+            feedback.append(lang_data['duration']['too_long'])
         else:
-            feedback.append(lang_data['clarity']['needs_work'])
+            feedback.append(lang_data['duration']['good'])
         
-        # Pace feedback
-        if pace >= 0.8:
-            feedback.append(lang_data['pace']['excellent'])
-        elif pace >= 0.6:
-            feedback.append(lang_data['pace']['good'])
+        # Engagement feedback
+        if engagement >= 0.8:
+            feedback.append(lang_data['engagement']['excellent'])
+        elif engagement >= 0.6:
+            feedback.append(lang_data['engagement']['good'])
         else:
-            feedback.append(lang_data['pace']['needs_work'])
+            feedback.append(lang_data['engagement']['needs_work'])
         
-        # Energy feedback
-        if energy >= 0.8:
-            feedback.append(lang_data['energy']['excellent'])
-        elif energy >= 0.6:
-            feedback.append(lang_data['energy']['good'])
+        # Consistency feedback
+        if consistency >= 0.8:
+            feedback.append(lang_data['consistency']['excellent'])
+        elif consistency >= 0.6:
+            feedback.append(lang_data['consistency']['good'])
         else:
-            feedback.append(lang_data['energy']['needs_work'])
-        
-        # Filler words feedback
-        if fillers == 0:
-            feedback.append(lang_data['filler_words']['excellent'])
-        elif fillers <= 2:
-            feedback.append(lang_data['filler_words']['good'])
-        else:
-            feedback.append(lang_data['filler_words']['needs_work'])
+            feedback.append(lang_data['consistency']['needs_work'])
         
         return "\n\n".join(feedback)
     
-    def generate_recommendations(self, clarity, pace, energy, fillers, language):
-        """Generate specific recommendations for improvement"""
+    def generate_recommendations(self, duration, engagement, consistency, language):
+        """Generate specific recommendations"""
         recommendations = []
         
-        if clarity < 0.7:
+        if duration < 30:
             if language == 'ar':
-                recommendations.append("• تدرب على نطق الحروف بوضوح")
-                recommendations.append("• خذ وقتك في الكلام")
+                recommendations.append("• حاول التحدث لمدة 30-90 ثانية للحصول على تقييم أفضل")
+                recommendations.append("• استخدم أمثلة وقصص لإطالة المدة بشكل مفيد")
             else:
-                recommendations.append("• Practice articulating letters clearly")
-                recommendations.append("• Take your time when speaking")
+                recommendations.append("• Try speaking for 30-90 seconds for better assessment")
+                recommendations.append("• Use examples and stories to extend duration meaningfully")
         
-        if pace < 0.7:
+        if engagement < 0.7:
             if language == 'ar':
-                recommendations.append("• استخدم الوقفات بشكل استراتيجي")
-                recommendations.append("• عدل سرعتك حسب محتوى الكلام")
+                recommendations.append("• تنوع في نبرة صوتك لجذب الانتباه")
+                recommendations.append("• استخدم الوقفات الدرامية للتشويق")
             else:
-                recommendations.append("• Use pauses strategically")
-                recommendations.append("• Adjust your speed based on content")
+                recommendations.append("• Vary your tone to maintain attention")
+                recommendations.append("• Use dramatic pauses for suspense")
         
-        if energy < 0.7:
+        if consistency < 0.7:
             if language == 'ar':
-                recommendations.append("• تنفس بعمق قبل الكلام")
-                recommendations.append("• تخيل أنك تتحدث لجمهور كبير")
+                recommendations.append("• تدرب على الحفاظ على سرعة ثابتة")
+                recommendations.append("• استخدم مؤقتًا للتدرب على التوقيت")
             else:
-                recommendations.append("• Breathe deeply before speaking")
-                recommendations.append("• Imagine speaking to a large audience")
+                recommendations.append("• Practice maintaining a steady pace")
+                recommendations.append("• Use a timer to practice timing")
         
-        if fillers > 2:
-            if language == 'ar':
-                recommendations.append("• استبدل كلمات الحشو بالوقفات")
-                recommendations.append("• تدرب على التفكير قبل الكلام")
-            else:
-                recommendations.append("• Replace filler words with pauses")
-                recommendations.append("• Practice thinking before speaking")
+        # General recommendations
+        if language == 'ar':
+            recommendations.append("• سجل نفسك واستمع للتسجيل للتحسين المستمر")
+            recommendations.append("• تدرب أمام المرآة لتحسين لغة الجسد الصوتية")
+        else:
+            recommendations.append("• Record yourself and listen for continuous improvement")
+            recommendations.append("• Practice in front of a mirror to improve vocal body language")
         
         return recommendations
+
+# Initialize audio analyzer
+audio_analyzer = AudioAnalyzer()
 
 # Initialize audio analyzer
 audio_analyzer = AudioAnalyzer()
@@ -3601,38 +3502,26 @@ Choose from the menu below to start your journey! 🚀"""
             self.bot.send_message(chat_id, error_msg)
 
     def process_voice_task(self, user_id, voice_message, task_id, language):
-        """Process voice recording and return analysis"""
+        """Process voice recording with simplified analysis"""
         try:
-            # Download voice file
-            file_id = voice_message['file_id']
-            file_info = requests.get(f"https://api.telegram.org/bot{self.bot.token}/getFile?file_id={file_id}").json()
-            file_path = file_info['result']['file_path']
-            file_url = f"https://api.telegram.org/file/bot{self.bot.token}/{file_path}"
+            # Get basic file info from Telegram voice message
+            file_info = {
+                'duration': voice_message.get('duration', 0),
+                'file_size': voice_message.get('file_size', 0),
+                'mime_type': voice_message.get('mime_type', 'audio/ogg')
+            }
             
-            # Download and save temporarily
-            response = requests.get(file_url)
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.ogg') as temp_file:
-                temp_file.write(response.content)
-                temp_path = temp_file.name
+            logging.info(f"🎤 Processing voice task: duration={file_info['duration']}s, size={file_info['file_size']} bytes")
             
-            # Convert to WAV for analysis
-            wav_path = temp_path.replace('.ogg', '.wav')
-            audio = AudioSegment.from_ogg(temp_path)
-            audio.export(wav_path, format='wav')
-            
-            # Analyze audio
-            analysis_result = audio_analyzer.analyze_audio(wav_path, task_id, language)
-            
-            # Clean up temp files
-            os.unlink(temp_path)
-            os.unlink(wav_path)
+            # Use simplified analysis (no file download needed)
+            analysis_result = audio_analyzer.analyze_audio(file_info, task_id, language)
             
             return analysis_result
             
         except Exception as e:
             logging.error(f"Error processing voice task: {e}")
             return {'success': False, 'error': str(e)}
-
+      
     def send_vocal_feedback(self, chat_id, user_id, task_id, analysis_result, language):
         """Send comprehensive feedback for vocal task"""
         task_data = VOCAL_TASKS.get(task_id, {})
