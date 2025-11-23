@@ -3,8 +3,4 @@ python-dotenv==1.0.0
 Flask==2.3.3
 schedule==1.2.0
 requests==2.31.0
-gunicorn==21.2.0
-pydub==0.25.1
-SpeechRecognition==3.10.0
-pyaudio==0.2.11
 numpy==1.24.3
