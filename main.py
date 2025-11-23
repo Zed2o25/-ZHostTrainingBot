@@ -126,6 +126,10 @@ class Database:
             completed_days_json = result[2]
             completed_days = set(json.loads(completed_days_json)) if completed_days_json else set()
             
+            # Convert achievements_unlocked from list (JSON) back to set
+            achievements_json = result[12]
+            achievements_unlocked = set(json.loads(achievements_json)) if achievements_json else set()
+            
             progress = {
                 "current_day": result[1],
                 "completed_days": completed_days,  # Now it's a set
@@ -138,7 +142,7 @@ class Database:
                 "storytelling_exercises": result[9],
                 "completed_exercises": json.loads(result[10]),
                 "total_study_time": result[11],
-                "achievements_unlocked": set(json.loads(result[12])),
+                "achievements_unlocked": achievements_unlocked,    # Now it's a set
                 "daily_tasks_completed": result[13],
                 "recording_sessions": result[14]
             }
@@ -167,7 +171,7 @@ class Database:
         ''', (
             user_id,
             progress.get("current_day", 1),
-            json.dumps("completed_days"),    # Now it's a list for JSON
+            json.dumps(completed_days),    # Now it's a list for JSON
             json.dumps(progress.get("quiz_scores", {})),
             progress.get("last_activity", datetime.now().isoformat()),
             progress.get("streak_count", 0),
@@ -177,7 +181,7 @@ class Database:
             progress.get("storytelling_exercises", 0),
             json.dumps(progress.get("completed_exercises", {})),
             progress.get("total_study_time", 0),
-            json.dumps(progress.get("achievements_unlocked", [])),
+            json.dumps(achievements_unlocked),
             progress.get("daily_tasks_completed", 0),
             progress.get("recording_sessions", 0),
             datetime.now().isoformat()
@@ -264,7 +268,56 @@ class Database:
         user_ids = [result[0] for result in results]
         conn.close()
         return user_ids
-
+        
+    def get_quiz_state(self, user_id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+                
+        cursor.execute('SELECT * FROM quiz_state WHERE user_id = ?', (user_id,))
+        result = cursor.fetchone()
+                
+        if result:
+            quiz_state = {
+                'day': result[1],
+                'current_question': result[2],
+                'score': result[3],
+                'total_questions': result[4],
+                'quiz_data': json.loads(result[5]) if result[5] else {}
+            }
+        else:
+            quiz_state = None
+                
+        conn.close()
+        return quiz_state
+            
+    def save_quiz_state(self, user_id, quiz_state):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+                
+        cursor.execute('''
+            INSERT OR REPLACE INTO quiz_state 
+            (user_id, day, current_question, score, total_questions, quiz_data)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            quiz_state.get('day'),
+            quiz_state.get('current_question'),
+            quiz_state.get('score'),
+            quiz_state.get('total_questions'),
+            json.dumps(quiz_state.get('quiz_data', {}))
+        ))
+                
+        conn.commit()
+        conn.close()
+            
+    def delete_quiz_state(self, user_id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+                
+        cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
+        conn.commit()
+        conn.close()
+    
 # Initialize database
 db = Database()
 
@@ -306,55 +359,6 @@ def can_take_quiz(user_id, day_num):
         
     return day_num == current_day or day_num in completed_days
           
-def get_quiz_state(self, user_id):
-    conn = sqlite3.connect(self.db_path)
-    cursor = conn.cursor()
-            
-    cursor.execute('SELECT * FROM quiz_state WHERE user_id = ?', (user_id,))
-    result = cursor.fetchone()
-            
-    if result:
-        quiz_state = {
-            'day': result[1],
-            'current_question': result[2],
-            'score': result[3],
-            'total_questions': result[4],
-            'quiz_data': json.loads(result[5]) if result[5] else {}
-        }
-    else:
-        quiz_state = None
-            
-    conn.close()
-    return quiz_state
-        
-def save_quiz_state(self, user_id, quiz_state):
-    conn = sqlite3.connect(self.db_path)
-    cursor = conn.cursor()
-            
-    cursor.execute('''
-        INSERT OR REPLACE INTO quiz_state 
-        (user_id, day, current_question, score, total_questions, quiz_data)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (
-        user_id,
-        quiz_state.get('day'),
-        quiz_state.get('current_question'),
-        quiz_state.get('score'),
-        quiz_state.get('total_questions'),
-        json.dumps(quiz_state.get('quiz_data', {}))
-    ))
-            
-    conn.commit()
-    conn.close()
-        
-def delete_quiz_state(self, user_id):
-    conn = sqlite3.connect(self.db_path)
-    cursor = conn.cursor()
-            
-    cursor.execute('DELETE FROM quiz_state WHERE user_id = ?', (user_id,))
-    conn.commit()
-    conn.close()
-
 # =============================================================================
 # COMPLETE 15-DAY TRAINING DATA - EXACT CONTENT AS PROVIDED
 # =============================================================================
@@ -2273,7 +2277,7 @@ def initialize_user_progress(user_id):
     """Initialize user progress in database"""
     progress = {
         "current_day": 1,
-        "completed_days": set(),  # ← CHANGED TO LIST
+        "completed_days": set(),  # Empty set
         "quiz_scores": {},
         "last_activity": datetime.now().isoformat(),
         "streak_count": 0,
@@ -2283,7 +2287,7 @@ def initialize_user_progress(user_id):
         "storytelling_exercises": 0,
         "completed_exercises": {},  # ← KEEP AS DICT
         "total_study_time": 0,
-        "achievements_unlocked": [],  # ← CHANGED TO LIST
+        "achievements_unlocked": set(),  # Empty set
         "daily_tasks_completed": 0,
         "recording_sessions": 0
     }
