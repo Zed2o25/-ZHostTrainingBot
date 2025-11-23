@@ -159,7 +159,7 @@ VOCAL_TASKS = {
 # =============================================================================
 
 # =============================================================================
-# SIMPLIFIED AUDIO ANALYSIS ENGINE (No external dependencies)
+# SIMPLIFIED AUDIO ANALYSIS ENGINE (No external dependencies at all)
 # =============================================================================
 
 class AudioAnalyzer:
@@ -176,10 +176,15 @@ class AudioAnalyzer:
                     'good': "أداؤك جيد، يمكن تحسينه أكثر.",
                     'needs_work': "حاول إضافة المزيد من الحماس والتعبير."
                 },
-                'consistency': {
-                    'excellent': "ثابت ومتسق في أدائك!",
-                    'good': "جيد، يمكن العمل على الثبات أكثر.",
-                    'needs_work': "حاول الحفاظ على وتيرة ثابتة."
+                'clarity': {
+                    'excellent': "وضوحك رائع! الكلمات مفهومة تماماً.",
+                    'good': "الوضوح جيد، يمكن تحسين بعض النقاط.",
+                    'needs_work': "حاول تحسين وضوح الكلام والنطق."
+                },
+                'confidence': {
+                    'excellent': "ثقتك عالية وتظهر في صوتك!",
+                    'good': "ثقتك جيدة، يمكن تعزيزها أكثر.",
+                    'needs_work': "حاول بناء الثقة في صوتك من خلال التدريب."
                 }
             },
             'en': {
@@ -193,39 +198,44 @@ class AudioAnalyzer:
                     'good': "Good performance, can be improved further.",
                     'needs_work': "Try adding more enthusiasm and expression."
                 },
-                'consistency': {
-                    'excellent': "Consistent and steady in your performance!",
-                    'good': "Good, can work on consistency more.",
-                    'needs_work': "Try to maintain a steady pace."
+                'clarity': {
+                    'excellent': "Your clarity is excellent! Words are perfectly understandable.",
+                    'good': "Clarity is good, some points can be improved.",
+                    'needs_work': "Try to improve speech clarity and articulation."
+                },
+                'confidence': {
+                    'excellent': "Your confidence is high and shows in your voice!",
+                    'good': "Your confidence is good, can be enhanced further.",
+                    'needs_work': "Try to build confidence in your voice through practice."
                 }
             }
         }
     
     def analyze_audio(self, file_info, task_id, language='ar'):
-        """Simplified audio analysis using only file metadata"""
+        """Simplified audio analysis using only file metadata - no numpy needed"""
         try:
             # Get basic file info from Telegram voice message
             duration = file_info.get('duration', 0)
             file_size = file_info.get('file_size', 0)
             
             # Simple scoring based on duration and file characteristics
-            engagement_score = self.analyze_engagement(duration, file_size)
-            consistency_score = self.analyze_consistency(duration)
+            scores = self.calculate_scores(duration, file_size)
             
             # Generate feedback
-            feedback = self.generate_feedback(duration, engagement_score, consistency_score, language)
+            feedback = self.generate_feedback(duration, scores, language)
             
             return {
                 'success': True,
                 'analysis': {
                     'duration': duration,
                     'file_size': file_size,
-                    'engagement_score': engagement_score,
-                    'consistency_score': consistency_score,
-                    'quality_indicator': file_size / max(1, duration)  # bytes per second
+                    'engagement_score': scores['engagement'],
+                    'clarity_score': scores['clarity'],
+                    'confidence_score': scores['confidence'],
+                    'overall_score': scores['overall']
                 },
                 'feedback': feedback,
-                'recommendations': self.generate_recommendations(duration, engagement_score, consistency_score, language)
+                'recommendations': self.generate_recommendations(duration, scores, language)
             }
             
         except Exception as e:
@@ -235,62 +245,90 @@ class AudioAnalyzer:
                 'error': str(e)
             }
     
-    def analyze_engagement(self, duration, file_size):
-        """Analyze engagement based on duration and file quality indicators"""
+    def calculate_scores(self, duration, file_size):
+        """Calculate scores without numpy"""
+        # Engagement score based on duration
         if duration < 10:
-            return 0.4  # Too short to assess properly
+            engagement = 0.4  # Too short
         elif duration < 30:
-            return 0.6  # Brief but acceptable
+            engagement = 0.6  # Brief
         elif 30 <= duration <= 180:
-            return 0.8  # Ideal range
+            engagement = 0.8  # Ideal
         else:
-            return 0.7  # Long but acceptable
-    
-    def analyze_consistency(self, duration):
-        """Analyze consistency based on duration patterns"""
-        # For now, we'll use duration as a proxy for consistency
-        # In a real app, this would analyze audio waveforms
-        if 45 <= duration <= 120:
-            return 0.8  # Good consistency range
-        elif duration > 0:
-            return 0.7  # Acceptable
+            engagement = 0.7  # Long
+        
+        # Clarity score based on file quality (simplified)
+        if file_size > 0 and duration > 0:
+            quality_ratio = file_size / duration
+            if quality_ratio > 8000:
+                clarity = 0.9  # High quality
+            elif quality_ratio > 4000:
+                clarity = 0.7  # Medium quality
+            else:
+                clarity = 0.5  # Low quality
         else:
-            return 0.5  # Poor
+            clarity = 0.6  # Default
+        
+        # Confidence score (simplified heuristic)
+        if duration >= 45 and clarity > 0.7:
+            confidence = 0.8  # Confident delivery
+        elif duration >= 20:
+            confidence = 0.7  # Moderate confidence
+        else:
+            confidence = 0.5  # Needs work
+        
+        # Overall score (simple average)
+        overall = (engagement + clarity + confidence) / 3.0
+        
+        return {
+            'engagement': engagement,
+            'clarity': clarity,
+            'confidence': confidence,
+            'overall': overall
+        }
     
-    def generate_feedback(self, duration, engagement, consistency, language):
+    def generate_feedback(self, duration, scores, language):
         """Generate professional feedback"""
         lang_data = self.professional_feedback[language]
         
-        feedback = []
+        feedback_parts = []
         
         # Duration feedback
         if duration < 30:
-            feedback.append(lang_data['duration']['too_short'])
+            feedback_parts.append(lang_data['duration']['too_short'])
         elif duration > 300:
-            feedback.append(lang_data['duration']['too_long'])
+            feedback_parts.append(lang_data['duration']['too_long'])
         else:
-            feedback.append(lang_data['duration']['good'])
+            feedback_parts.append(lang_data['duration']['good'])
         
         # Engagement feedback
-        if engagement >= 0.8:
-            feedback.append(lang_data['engagement']['excellent'])
-        elif engagement >= 0.6:
-            feedback.append(lang_data['engagement']['good'])
+        if scores['engagement'] >= 0.8:
+            feedback_parts.append(lang_data['engagement']['excellent'])
+        elif scores['engagement'] >= 0.6:
+            feedback_parts.append(lang_data['engagement']['good'])
         else:
-            feedback.append(lang_data['engagement']['needs_work'])
+            feedback_parts.append(lang_data['engagement']['needs_work'])
         
-        # Consistency feedback
-        if consistency >= 0.8:
-            feedback.append(lang_data['consistency']['excellent'])
-        elif consistency >= 0.6:
-            feedback.append(lang_data['consistency']['good'])
+        # Clarity feedback
+        if scores['clarity'] >= 0.8:
+            feedback_parts.append(lang_data['clarity']['excellent'])
+        elif scores['clarity'] >= 0.6:
+            feedback_parts.append(lang_data['clarity']['good'])
         else:
-            feedback.append(lang_data['consistency']['needs_work'])
+            feedback_parts.append(lang_data['clarity']['needs_work'])
         
-        return "\n\n".join(feedback)
+        # Confidence feedback
+        if scores['confidence'] >= 0.8:
+            feedback_parts.append(lang_data['confidence']['excellent'])
+        elif scores['confidence'] >= 0.6:
+            feedback_parts.append(lang_data['confidence']['good'])
+        else:
+            feedback_parts.append(lang_data['confidence']['needs_work'])
+        
+        return "\n\n".join(feedback_parts)
     
-    def generate_recommendations(self, duration, engagement, consistency, language):
-        """Generate specific recommendations"""
+    def generate_recommendations(self, duration, scores, language):
+        """Generate specific recommendations without numpy"""
         recommendations = []
         
         if duration < 30:
@@ -301,7 +339,7 @@ class AudioAnalyzer:
                 recommendations.append("• Try speaking for 30-90 seconds for better assessment")
                 recommendations.append("• Use examples and stories to extend duration meaningfully")
         
-        if engagement < 0.7:
+        if scores['engagement'] < 0.7:
             if language == 'ar':
                 recommendations.append("• تنوع في نبرة صوتك لجذب الانتباه")
                 recommendations.append("• استخدم الوقفات الدرامية للتشويق")
@@ -309,26 +347,31 @@ class AudioAnalyzer:
                 recommendations.append("• Vary your tone to maintain attention")
                 recommendations.append("• Use dramatic pauses for suspense")
         
-        if consistency < 0.7:
+        if scores['clarity'] < 0.7:
             if language == 'ar':
-                recommendations.append("• تدرب على الحفاظ على سرعة ثابتة")
-                recommendations.append("• استخدم مؤقتًا للتدرب على التوقيت")
+                recommendations.append("• تدرب على نطق الحروف بوضوح")
+                recommendations.append("• تحدث ببطء وتركيز على كل كلمة")
             else:
-                recommendations.append("• Practice maintaining a steady pace")
-                recommendations.append("• Use a timer to practice timing")
+                recommendations.append("• Practice articulating letters clearly")
+                recommendations.append("• Speak slowly and focus on each word")
         
-        # General recommendations
+        if scores['confidence'] < 0.7:
+            if language == 'ar':
+                recommendations.append("• تدرب أمام المرآة لبناء الثقة")
+                recommendations.append("• سجل نفسك واستمع للتسجيل للتحسين")
+            else:
+                recommendations.append("• Practice in front of a mirror to build confidence")
+                recommendations.append("• Record yourself and listen for improvement")
+        
+        # Task-specific recommendations
         if language == 'ar':
-            recommendations.append("• سجل نفسك واستمع للتسجيل للتحسين المستمر")
-            recommendations.append("• تدرب أمام المرآة لتحسين لغة الجسد الصوتية")
+            recommendations.append("• استمر في التدريب المنتظم للتحسين المستمر")
+            recommendations.append("• اطلب feedback من الأصدقاء أو الزملاء")
         else:
-            recommendations.append("• Record yourself and listen for continuous improvement")
-            recommendations.append("• Practice in front of a mirror to improve vocal body language")
+            recommendations.append("• Continue regular practice for continuous improvement")
+            recommendations.append("• Ask for feedback from friends or colleagues")
         
         return recommendations
-
-# Initialize audio analyzer
-audio_analyzer = AudioAnalyzer()
 
 # Initialize audio analyzer
 audio_analyzer = AudioAnalyzer()
