@@ -3788,7 +3788,7 @@ Choose from the menu below to start your journey! 🚀"""
             send_achievement_notification(self.bot, user_id, new_achievements)
         
     def show_vocal_task_details(self, chat_id, user_id, task_id):
-        """Show details for a specific vocal task"""
+        """Show details for a specific vocal task - FIXED VERSION"""
         task_data = VOCAL_TASKS.get(task_id)
         if not task_data:
             error_msg = self.get_text(user_id, "❌ المهمة غير موجودة", "❌ Task not found")
@@ -3800,18 +3800,27 @@ Choose from the menu below to start your journey! 🚀"""
         task_name = task_data['task_ar'] if language == 'ar' else task_data['task_en']
         description = task_data['description_ar'] if language == 'ar' else task_data['description_en']
         
+        # Get the text to read (if available) - FIXED LOGIC
+        text_to_read = ""
+        if language == 'ar' and 'text_ar' in task_data:
+            text_to_read = f"\n📖 **النص للقراءة:**\n{task_data['text_ar']}\n"
+        elif language == 'en' and 'text_en' in task_data:
+            text_to_read = f"\n📖 **Text to Read:**\n{task_data['text_en']}\n"
+        
         if language == 'ar':
             message = f"🎤 **{task_name}**\n\n"
-            message += f"📝 **الوصف:**\n{description}\n\n"
-            message += "🎯 **معايير التقييم:**\n"
+            message += f"📝 **الوصف:**\n{description}\n"
+            message += text_to_read  # This will add the text if available
+            message += "\n🎯 **معايير التقييم:**\n"
             for criterion, desc in task_data['evaluation_criteria'].items():
                 message += f"• {desc}\n"
             message += "\n⏰ **المدة المقترحة:** 1-3 دقائق\n"
             message += "\n🎙️ **إرسل تسجيلك الصوتي الآن!**"
         else:
             message = f"🎤 **{task_name}**\n\n"
-            message += f"📝 **Description:**\n{description}\n\n"
-            message += "🎯 **Evaluation Criteria:**\n"
+            message += f"📝 **Description:**\n{description}\n"
+            message += text_to_read  # This will add the text if available
+            message += "\n🎯 **Evaluation Criteria:**\n"
             for criterion, desc in task_data['evaluation_criteria'].items():
                 message += f"• {desc}\n"
             message += "\n⏰ **Suggested Duration:** 1-3 minutes\n"
