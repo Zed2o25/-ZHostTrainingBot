@@ -733,7 +733,9 @@ class Database:
                 fetch_one=True
             )
             
-            return result['count'] if result else 0
+            count = result['count'] if result else 0
+            logging.info(f"🔍 Vocal task completion count for user {user_id}: {count}")
+            return count
             
         except Exception as e:
             logging.error(f"Error getting vocal task count for {user_id}: {e}")
@@ -3080,8 +3082,9 @@ def format_progress_dashboard(user_id, language):
     total_exercises = sum(len(exercises) for exercises in progress.get("completed_exercises", {}).values())
     achievements = db.get_user_achievements(user_id)
     
-    # Get vocal tasks completion
-    vocal_tasks_completed = db.get_vocal_task_completion_count(user_id)
+    # Get vocal tasks completion - BOTH METHODS
+    vocal_tasks_completed_db = db.get_vocal_task_completion_count(user_id)
+    vocal_tasks_completed_progress = progress.get("completed_voice_exercises", 0)
     total_vocal_tasks = len(VOCAL_TASKS)
     
     if language == 'ar':
@@ -3094,8 +3097,9 @@ def format_progress_dashboard(user_id, language):
 • التمارين المكتملة: {total_exercises}
 
 🎤 **المهام الصوتية:**
-• المهام المكتملة: {vocal_tasks_completed}/{total_vocal_tasks}
-• نسبة الإنجاز: {(vocal_tasks_completed/total_vocal_tasks)*100:.1f}%
+• المهام المكتملة (التسجيلات): {vocal_tasks_completed_db}/{total_vocal_tasks}
+• تمارين الصوت المكتملة: {vocal_tasks_completed_progress}
+• نسبة الإنجاز: {(vocal_tasks_completed_db/total_vocal_tasks)*100:.1f}%
 
 🏆 **الإنجازات:**
 • تمارين الصوت المكتملة: {progress.get('completed_voice_exercises', 0)}
@@ -3117,8 +3121,9 @@ def format_progress_dashboard(user_id, language):
 • Exercises Completed: {total_exercises}
 
 🎤 **Vocal Tasks:**
-• Tasks Completed: {vocal_tasks_completed}/{total_vocal_tasks}
-• Completion Rate: {(vocal_tasks_completed/total_vocal_tasks)*100:.1f}%
+• Tasks Completed (Recordings): {vocal_tasks_completed_db}/{total_vocal_tasks}
+• Voice Exercises Completed: {vocal_tasks_completed_progress}
+• Completion Rate: {(vocal_tasks_completed_db/total_vocal_tasks)*100:.1f}%
 
 🏆 **Achievements:**
 • Voice Exercises Completed: {progress.get('completed_voice_exercises', 0)}
@@ -3640,14 +3645,22 @@ Choose from the menu below to start your journey! 🚀"""
         task_data = VOCAL_TASKS.get(task_id, {})
         task_name = task_data.get('task_ar', '') if language == 'ar' else task_data.get('task_en', '')
         
-        # Save completion to database - FIXED METHOD NAME
+        # Save completion to database
         db.save_vocal_task_completion(
             user_id, 
             task_id, 
-            "telegram_voice",  # We don't store the actual file
+            "telegram_voice",
             analysis_result['analysis'],
             analysis_result['feedback']
         )
+        
+        # ✅ FIX: UPDATE USER PROGRESS COUNTERS
+        progress = db.get_user_progress(user_id)
+        if progress:
+            progress["completed_voice_exercises"] = progress.get("completed_voice_exercises", 0) + 1
+            progress["recording_sessions"] = progress.get("recording_sessions", 0) + 1
+            db.save_user_progress(user_id, progress)
+            logging.info(f"✅ Updated progress counters for user {user_id}: voice_exercises={progress['completed_voice_exercises']}, recordings={progress['recording_sessions']}")
         
         # Prepare feedback message
         if language == 'ar':
@@ -3658,7 +3671,7 @@ Choose from the menu below to start your journey! 🚀"""
             message += f"• السرعة: {analysis_result['analysis']['pace_score']*100:.0f}%\n"
             message += f"• الطاقة: {analysis_result['analysis']['energy_score']*100:.0f}%\n"
             message += f"• كلمات الحشو: {analysis_result['analysis']['filler_count']}\n\n"
-            message += "💡 **التغذية الراجعة/الملاحظات:**\n"
+            message += "💡 **التغذية الراجعة:**\n"
             message += analysis_result['feedback'] + "\n\n"
             message += "🚀 **التوصيات:**\n"
             for rec in analysis_result.get('recommendations', []):
