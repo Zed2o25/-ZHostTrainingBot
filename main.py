@@ -3541,6 +3541,60 @@ class MessageHandler:
     
     def get_text(self, user_id, arabic_text, english_text):
         return arabic_text if self.get_user_language(user_id) == 'ar' else english_text
+
+    def show_vocal_tasks_menu(self, chat_id, user_id):
+        """Show the vocal tasks menu"""
+        language = self.get_user_language(user_id)
+        
+        if language == 'ar':
+            message = "🎤 **المهام الصوتية**\n\n"
+            message += "اختر واحدة من المهام الصوتية التالية لممارسة النطق والتحدث:\n\n"
+            
+            keyboard = {
+                "inline_keyboard": []
+            }
+            
+            for task_id, task_data in VOCAL_TASKS.items():
+                keyboard["inline_keyboard"].append([
+                    {
+                        "text": f"🎤 {task_id}. {task_data['task_ar']}",
+                        "callback_data": f"vocal_task_{task_id}"
+                    }
+                ])
+            
+            # Add stats and back button
+            keyboard["inline_keyboard"].append([
+                {"text": "📊 إحصائيات المهام", "callback_data": "vocal_stats"}
+            ])
+            keyboard["inline_keyboard"].append([
+                {"text": "🏠 القائمة الرئيسية", "callback_data": "main_menu"}
+            ])
+            
+        else:
+            message = "🎤 **Vocal Tasks**\n\n"
+            message += "Choose one of the following vocal tasks to practice pronunciation and speaking:\n\n"
+            
+            keyboard = {
+                "inline_keyboard": []
+            }
+            
+            for task_id, task_data in VOCAL_TASKS.items():
+                keyboard["inline_keyboard"].append([
+                    {
+                        "text": f"🎤 {task_id}. {task_data['task_en']}",
+                        "callback_data": f"vocal_task_{task_id}"
+                    }
+                ])
+            
+            # Add stats and back button
+            keyboard["inline_keyboard"].append([
+                {"text": "📊 Task Statistics", "callback_data": "vocal_stats"}
+            ])
+            keyboard["inline_keyboard"].append([
+                {"text": "🏠 Main Menu", "callback_data": "main_menu"}
+            ])
+        
+        self.bot.send_message(chat_id, message, keyboard)
     
     def handle_start(self, chat_id, user_id):
         """Handle /start command"""
