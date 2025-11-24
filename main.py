@@ -709,7 +709,7 @@ class Database:
             logging.error(f"Error saving vocal task for {user_id}: {e}")
 
     def get_completed_vocal_tasks(self, user_id):
-        """Get completed vocal tasks for a user"""
+        """Get completed vocal tasks for a user - SAFE VERSION"""
         try:
             results = self.execute_query(
                 'SELECT task_id FROM vocal_tasks WHERE user_id = %s AND completed_at IS NOT NULL', 
@@ -717,12 +717,24 @@ class Database:
                 fetch=True
             )
             
-            # Return list of completed task IDs
-            return [result['task_id'] for result in results]
-            
+            # FIX: Handle case where results might be None or empty
+            if results:
+                # Return list of completed task IDs
+                task_ids = []
+                for result in results:
+                    if isinstance(result, dict) and 'task_id' in result:
+                        task_ids.append(result['task_id'])
+                    elif isinstance(result, (list, tuple)) and len(result) > 0:
+                        task_ids.append(result[0])  # First element is task_id
+                logging.info(f"🔍 Found {len(task_ids)} completed vocal tasks for user {user_id}: {task_ids}")
+                return task_ids
+            else:
+                logging.info(f"🔍 No completed vocal tasks found for user {user_id}")
+                return []  # Return empty list instead of None
+                
         except Exception as e:
             logging.error(f"Error getting completed vocal tasks for {user_id}: {e}")
-            return []
+            return []  # Return empty list on error
 
     def get_vocal_task_completion_count(self, user_id):
         """Get count of completed vocal tasks for a user"""
@@ -837,6 +849,23 @@ class Database:
         except Exception as e:
             logging.error(f"Error getting users with preferences: {e}")
             return []
+
+    def debug_completed_tasks(self, user_id):
+        """Debug method to see what get_completed_vocal_tasks returns"""
+        try:
+            results = self.execute_query(
+                'SELECT task_id FROM vocal_tasks WHERE user_id = %s AND completed_at IS NOT NULL', 
+                (user_id,), 
+                fetch=True
+            )
+            logging.info(f"🔍 DEBUG: Raw results from DB: {results}")
+            logging.info(f"🔍 DEBUG: Type of results: {type(results)}")
+            if results:
+                logging.info(f"🔍 DEBUG: First item: {results[0]}, type: {type(results[0])}")
+            return results
+        except Exception as e:
+            logging.error(f"DEBUG Error: {e}")
+            return None
 
 # Initialize database - THIS STAYS OUTSIDE THE CLASS
 db = Database()
@@ -3774,41 +3803,49 @@ Choose from the menu below to start your journey! 🚀"""
         self.bot.send_message(chat_id, message, keyboard)
 
     def show_vocal_stats(self, chat_id, user_id):
-        """Show vocal tasks statistics"""
-        completed_tasks = db.get_completed_vocal_tasks(user_id)
-        total_completed = len(completed_tasks)
-        total_tasks = len(VOCAL_TASKS)
-        
-        language = self.get_user_language(user_id)
-        
-        if language == 'ar':
-            message = f"📊 **إحصائيات المهام الصوتية**\n\n"
-            message += f"• المهام المكتملة: {total_completed}/{total_tasks}\n"
-            message += f"• نسبة الإنجاز: {(total_completed/total_tasks)*100:.1f}%\n\n"
+        """Show vocal tasks statistics - FIXED VERSION"""
+        try:
+            completed_tasks = db.get_completed_vocal_tasks(user_id)
+            total_completed = len(completed_tasks) if completed_tasks else 0
+            total_tasks = len(VOCAL_TASKS)
             
-            if completed_tasks:
-                message += "✅ **المهام المكتملة:**\n"
-                for task in completed_tasks[:5]:  # Show last 5 tasks
-                    task_data = VOCAL_TASKS.get(task['task_id'], {})
-                    task_name = task_data.get('task_ar', f'المهمة {task["task_id"]}')
-                    message += f"• {task_name}\n"
-            else:
-                message += "💡 لم تكمل أي مهمة صوتية بعد. ابدأ بالتدرب الآن! 🎤"
-        else:
-            message = f"📊 **Vocal Tasks Statistics**\n\n"
-            message += f"• Completed Tasks: {total_completed}/{total_tasks}\n"
-            message += f"• Completion Rate: {(total_completed/total_tasks)*100:.1f}%\n\n"
+            language = self.get_user_language(user_id)
             
-            if completed_tasks:
-                message += "✅ **Completed Tasks:**\n"
-                for task in completed_tasks[:5]:
-                    task_data = VOCAL_TASKS.get(task['task_id'], {})
-                    task_name = task_data.get('task_en', f'Task {task["task_id"]}')
-                    message += f"• {task_name}\n"
+            if language == 'ar':
+                message = f"📊 **إحصائيات المهام الصوتية**\n\n"
+                message += f"• المهام المكتملة: {total_completed}/{total_tasks}\n"
+                message += f"• نسبة الإنجاز: {(total_completed/total_tasks)*100:.1f}%\n\n"
+                
+                if completed_tasks and total_completed > 0:
+                    message += "✅ **المهام المكتملة:**\n"
+                    # FIX: completed_tasks is a list of integers (task_ids), not dictionaries
+                    for task_id in completed_tasks[:5]:  # Show last 5 tasks
+                        task_data = VOCAL_TASKS.get(task_id, {})
+                        task_name = task_data.get('task_ar', f'المهمة {task_id}')
+                        message += f"• {task_name}\n"
+                else:
+                    message += "💡 لم تكمل أي مهمة صوتية بعد. ابدأ بالتدرب الآن! 🎤"
             else:
-                message += "💡 You haven't completed any vocal tasks yet. Start practicing now! 🎤"
-        
-        self.bot.send_message(chat_id, message)
+                message = f"📊 **Vocal Tasks Statistics**\n\n"
+                message += f"• Completed Tasks: {total_completed}/{total_tasks}\n"
+                message += f"• Completion Rate: {(total_completed/total_tasks)*100:.1f}%\n\n"
+                
+                if completed_tasks and total_completed > 0:
+                    message += "✅ **Completed Tasks:**\n"
+                    # FIX: completed_tasks is a list of integers (task_ids), not dictionaries
+                    for task_id in completed_tasks[:5]:
+                        task_data = VOCAL_TASKS.get(task_id, {})
+                        task_name = task_data.get('task_en', f'Task {task_id}')
+                        message += f"• {task_name}\n"
+                else:
+                    message += "💡 You haven't completed any vocal tasks yet. Start practicing now! 🎤"
+            
+            self.bot.send_message(chat_id, message)
+            
+        except Exception as e:
+            logging.error(f"Error in show_vocal_stats: {e}")
+            error_msg = self.get_text(user_id, "❌ حدث خطأ في عرض الإحصائيات", "❌ Error showing statistics")
+            self.bot.send_message(chat_id, error_msg)
     
     def handle_callback(self, chat_id, user_id, data, callback_query_id=None):
         logging.info(f"📱 Callback received: {data} from user {user_id}")
