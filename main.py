@@ -401,26 +401,62 @@ class Database:
         self.db_url = os.environ.get('DATABASE_URL', 'postgresql://users_zaj1_user:kj6RsagzNnx3DXjF1ypteklzAWzENOIZ@dpg-d4hmnep5pdvs739bb5q0-a.oregon-postgres.render.com/users_zaj1')
         self.init_db()
     
-    def get_connection(self):
-        """Get PostgreSQL connection using pg8000 with SSL"""
-        # Parse the database URL
-        if self.db_url.startswith('postgresql://'):
-            url_parts = self.db_url.replace('postgresql://', '').split('@')
-            user_pass = url_parts[0].split(':')
-            host_db = url_parts[1].split('/')
-            host_port = host_db[0].split(':')
+    ddef get_connection(self):
+        """Get PostgreSQL connection using pg8000 with SSL - FIXED VERSION"""
+        try:
+            # Parse the database URL safely
+            if self.db_url.startswith('postgresql://'):
+                # Remove the protocol prefix
+                url_without_protocol = self.db_url.replace('postgresql://', '')
+                
+                # Split user:password from host:port/database
+                if '@' in url_without_protocol:
+                    # Format: username:password@host:port/database
+                    user_pass_part, host_part = url_without_protocol.split('@', 1)
+                    
+                    # Username might contain dots (postgres.projectname)
+                    if ':' in user_pass_part:
+                        # Split at the LAST colon to get username and password
+                        last_colon_index = user_pass_part.rfind(':')
+                        username = user_pass_part[:last_colon_index]
+                        password = user_pass_part[last_colon_index + 1:]
+                    else:
+                        username = user_pass_part
+                        password = ""
+                    
+                    # Split host:port/database
+                    if '/' in host_part:
+                        host_port_part, database = host_part.split('/', 1)
+                    else:
+                        host_port_part = host_part
+                        database = "postgres"
+                    
+                    # Split host and port
+                    if ':' in host_port_part:
+                        host, port_str = host_port_part.split(':', 1)
+                        port = int(port_str)
+                    else:
+                        host = host_port_part
+                        port = 5432
+                    
+                    logging.info(f"🔗 Connecting to {host}:{port}/{database} as {username}")
+                    
+                    return pg8000.connect(
+                        user=username,
+                        password=password,
+                        host=host,
+                        port=port,
+                        database=database,
+                        ssl_context=True
+                    )
             
-            return pg8000.connect(
-                user=user_pass[0],
-                password=user_pass[1],
-                host=host_port[0],
-                port=int(host_port[1]) if len(host_port) > 1 else 5432,
-                database=host_db[1],
-                ssl_context=True  # SSL enabled
-            )
-        else:
-            # Fallback for other URL formats
+            # Fallback: try direct connection
+            logging.warning("Using fallback connection method")
             return pg8000.connect(self.db_url, ssl_context=True)
+            
+        except Exception as e:
+            logging.error(f"❌ Connection error: {e}")
+            raise e
     
     def execute_query(self, query, params=None, fetch=False, fetch_one=False):
         """Execute query with proper error handling"""
@@ -464,6 +500,15 @@ class Database:
         """Initialize PostgreSQL database tables"""
         try:
             logging.info("🔄 Initializing PostgreSQL database with pg8000...")
+           
+            # Test connection first
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT version()")
+            version = cursor.fetchone()
+            logging.info(f"✅ Connected to PostgreSQL: {version[0]}")
+            cursor.close()
+            conn.close()
             
             # User progress table
             self.execute_query('''
@@ -543,7 +588,17 @@ class Database:
             
         except Exception as e:
             logging.error(f"❌ Database initialization error: {e}")
-    
+            # Log the full URL (mask password)
+            safe_url = self.db_url
+            if ':' in self.db_url and '@' in self.db_url:
+                # Mask password in logs
+                parts = self.db_url.split('@')
+                user_pass = parts[0]
+                if ':' in user_pass:
+                    user = user_pass.split(':')[0]
+                    safe_url = f"{user}:***@{parts[1]}"
+            logging.error(f"🔗 Connection URL: {safe_url}")
+        
     def get_user_progress(self, user_id):
         """Get user progress from PostgreSQL"""
         try:
