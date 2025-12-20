@@ -401,7 +401,7 @@ class Database:
         self.db_url = os.environ.get('DATABASE_URL', 'postgresql://users_zaj1_user:kj6RsagzNnx3DXjF1ypteklzAWzENOIZ@dpg-d4hmnep5pdvs739bb5q0-a.oregon-postgres.render.com/users_zaj1')
         self.init_db()
     
-    ddef get_connection(self):
+    def get_connection(self):
         """Get PostgreSQL connection using pg8000 with SSL - FIXED VERSION"""
         try:
             # Parse the database URL safely
